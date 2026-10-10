@@ -6,6 +6,7 @@ Esto evita repetir la misma logica en cada modulo.
 """
 
 import re
+from decimal import Decimal, InvalidOperation
 
 from errores import ErrorValidacion
 
@@ -45,13 +46,20 @@ def validar_entero(valor, campo, minimo=None):
 
 
 def validar_decimal(valor, campo, minimo=None, mayor_a=None):
-    try:
-        numero = float(valor)
-    except (TypeError, ValueError):
+    # Usamos Decimal (no float) para no arrastrar errores de redondeo en
+    # precios o salarios. Aceptamos coma como separador decimal.
+    if isinstance(valor, bool):
         raise ErrorValidacion("El campo '{}' debe ser un numero.".format(campo))
-    if mayor_a is not None and numero <= mayor_a:
+    texto = str(valor).strip().replace(",", ".")
+    try:
+        numero = Decimal(texto)
+    except (InvalidOperation, ValueError):
+        raise ErrorValidacion("El campo '{}' debe ser un numero.".format(campo))
+    if not numero.is_finite():
+        raise ErrorValidacion("El campo '{}' debe ser un numero.".format(campo))
+    if mayor_a is not None and numero <= Decimal(str(mayor_a)):
         raise ErrorValidacion("El campo '{}' debe ser mayor a {}.".format(campo, mayor_a))
-    if minimo is not None and numero < minimo:
+    if minimo is not None and numero < Decimal(str(minimo)):
         raise ErrorValidacion("El campo '{}' no puede ser menor a {}.".format(campo, minimo))
     return numero
 

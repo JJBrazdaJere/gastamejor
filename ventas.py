@@ -30,7 +30,9 @@ def _normalizar_lineas(lineas):
         acumulado[producto_id] = acumulado.get(producto_id, 0) + cantidad
     if not acumulado:
         raise ErrorValidacion("La venta debe tener al menos un producto.")
-    return list(acumulado.items())
+    # Ordenamos por producto_id para que dos ventas concurrentes tomen los
+    # bloqueos (FOR UPDATE) siempre en el mismo orden y no se traben entre sí.
+    return sorted(acumulado.items())
 
 
 def listar_ventas(db):
@@ -138,7 +140,8 @@ def eliminar_venta(db, venta_id):
     with transaccion(db):
         lineas = consultar(
             db,
-            "SELECT producto_id, cantidad FROM detalle_ventas WHERE venta_id = %s FOR UPDATE",
+            "SELECT producto_id, cantidad FROM detalle_ventas "
+            "WHERE venta_id = %s ORDER BY producto_id FOR UPDATE",
             (venta_id,),
         )
         for producto_id, cantidad in lineas:

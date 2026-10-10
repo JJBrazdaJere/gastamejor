@@ -9,6 +9,7 @@ ErrorClaveForanea, ErrorValidacion, ErrorNoEncontrado) en vez de devolver None.
 
 import pytest
 
+from base_datos import consultar
 from errores import ErrorClaveForanea, ErrorNoEncontrado, ErrorUnico, ErrorValidacion
 from productos import (
     actualizar_producto,
@@ -83,3 +84,10 @@ def test_eliminar_proveedor_con_productos_es_rechazado(db):
         from proveedores import eliminar_proveedor
 
         eliminar_proveedor(db, proveedor_id)
+
+
+def test_consulta_con_like_y_parametros_vacios(db):
+    # El '%' literal no debe confundirse con un marcador aunque llegue una
+    # tupla vacia de parametros (defensa de base_datos._parametros).
+    filas = consultar(db, "SELECT count(*) FROM productos WHERE nombre LIKE 'a%'", ())
+    assert filas[0][0] >= 0

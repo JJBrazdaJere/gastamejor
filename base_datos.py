@@ -46,11 +46,20 @@ def _traducir(error):
     return ErrorBaseDatos(str(error))
 
 
+def _parametros(valor):
+    """Trata una secuencia/dict vacio como 'sin parametros'.
+
+    Asi una consulta con un '%' literal (por ejemplo un LIKE) no se confunde
+    con un marcador de psycopg cuando llega una tupla vacia.
+    """
+    return valor if valor else None
+
+
 def consultar(db, sql, parametros=None):
     """SELECT que devuelve TODAS las filas (lista de tuplas)."""
     try:
         with db.cursor() as cursor:
-            cursor.execute(sql, parametros)
+            cursor.execute(sql, _parametros(parametros))
             return cursor.fetchall()
     except psycopg.Error as error:
         raise _traducir(error) from error
@@ -60,7 +69,7 @@ def consultar_uno(db, sql, parametros=None):
     """SELECT que devuelve UNA fila (tupla) o None si no hay resultados."""
     try:
         with db.cursor() as cursor:
-            cursor.execute(sql, parametros)
+            cursor.execute(sql, _parametros(parametros))
             return cursor.fetchone()
     except psycopg.Error as error:
         raise _traducir(error) from error
@@ -70,7 +79,7 @@ def ejecutar(db, sql, parametros=None):
     """INSERT / UPDATE / DELETE. Devuelve la cantidad de filas afectadas."""
     try:
         with db.cursor() as cursor:
-            cursor.execute(sql, parametros)
+            cursor.execute(sql, _parametros(parametros))
             return cursor.rowcount
     except psycopg.Error as error:
         raise _traducir(error) from error
@@ -80,7 +89,7 @@ def ejecutar_devolviendo(db, sql, parametros=None):
     """Como ejecutar(), pero para sentencias con RETURNING. Devuelve la fila."""
     try:
         with db.cursor() as cursor:
-            cursor.execute(sql, parametros)
+            cursor.execute(sql, _parametros(parametros))
             return cursor.fetchone()
     except psycopg.Error as error:
         raise _traducir(error) from error

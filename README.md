@@ -150,6 +150,17 @@ with transaccion(db):
 
 Si ya hay una transacción en curso, usa un **SAVEPOINT** automáticamente.
 
+## Decisiones de robustez
+
+- **Dinero con `Decimal`**: precios y salarios se guardan como `numeric` y se
+  validan con `Decimal` (no `float`), evitando errores de redondeo.
+- **Enteros estrictos**: `validar_entero` rechaza decimales (Python truncaría
+  `1.5` a `1`, peligroso para stock o cantidades).
+- **Bloqueo ordenado en ventas**: los bloqueos de producto se toman en orden
+  de `producto_id`, para no provocar *deadlocks* entre ventas concurrentes.
+- **`%` literal seguro**: una consulta como `LIKE 'a%'` no se confunde con un
+  marcador aunque se pase una tupla de parámetros vacía.
+
 ## Nota sobre los `id`
 
 Todos los `id` los genera la base de datos con `IDENTITY`

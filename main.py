@@ -12,6 +12,7 @@ Nota: los textos que se imprimen van sin acentos a proposito.
 """
 
 import sys
+from decimal import Decimal, InvalidOperation
 
 # Fuerza salida/entrada en UTF-8 para que los acentos de los DATOS se vean bien.
 for _stream in (sys.stdout, sys.stderr, sys.stdin):
@@ -72,8 +73,8 @@ def pedir_decimal(mensaje):
     while True:
         valor = input(mensaje).strip().replace(",", ".")
         try:
-            return float(valor)
-        except ValueError:
+            return Decimal(valor)
+        except InvalidOperation:
             print("Ingresa un numero valido (ej: 1234.50).")
 
 
