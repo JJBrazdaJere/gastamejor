@@ -1,8 +1,13 @@
 # API SQL-PY
 
-Sistema de gestión en Python conectado a PostgreSQL. Por ahora maneja
-**productos**, **proveedores** y **clientes**; está pensado para seguir
-agregando módulos (empleados, ventas...).
+Sistema de gestión en Python conectado a PostgreSQL. Maneja **productos**,
+**proveedores**, **clientes**, **empleados** y **ventas**, más **reportes**
+de solo lectura. Está pensado para seguir creciendo (por ejemplo, con una
+interfaz web con Django).
+
+El objetivo del proyecto es ser **robusto y seguro**: validaciones centralizadas,
+manejo de errores con excepciones, operaciones atómicas y credenciales fuera
+del código.
 
 ## Requisitos
 
@@ -39,6 +44,27 @@ que está excluido de Git (`.gitignore`).
 > obligatorio (`PGDATABASE`, `PGUSER`, `PGPASSWORD`), el programa avisa y no
 > intenta conectarse.
 
+## Base de datos: migraciones
+
+Los cambios de estructura de la base viven en `migrations/`, numerados y con
+su script de reversión. Se aplican con `psql` (o con el cliente que prefieras):
+
+```powershell
+$env:PGPASSWORD = "tu_password"
+$psql = "C:\Program Files\PostgreSQL\18\bin\psql.exe"
+& $psql -h localhost -U postgres -d practica_sql -v ON_ERROR_STOP=1 -f migrations\001_identity_ids.sql
+& $psql -h localhost -U postgres -d practica_sql -v ON_ERROR_STOP=1 -f migrations\002_constraints.sql
+& $psql -h localhost -U postgres -d practica_sql -v ON_ERROR_STOP=1 -f migrations\003_precio_unitario.sql
+```
+
+| Migración | Qué hace |
+|---|---|
+| `001_identity_ids` | Autoincremento `IDENTITY` en `clientes`, `empleados` y `ventas` |
+| `002_constraints` | `CHECK` de cantidad/precio/stock y `DEFAULT CURRENT_DATE` en `ventas.fecha` |
+| `003_precio_unitario` | Agrega `detalle_ventas.precio_unitario` (precio del momento de la venta) |
+
+Cada archivo `NOMBRE_rollback.sql` revierte su migración.
+
 ## Uso
 
 ```powershell
@@ -48,13 +74,23 @@ python main.py
 Se abre un menú:
 
 ```
-=== SISTEMA DE GESTIÓN ===
+=== SISTEMA DE GESTION ===
 1) Productos
 2) Proveedores
+3) Clientes
+4) Empleados
+5) Ventas
+6) Reportes
 0) Salir
 ```
 
-Cada entidad tiene su submenú: listar, ver por ID, agregar, actualizar y eliminar.
+Cada entidad tiene su submenú (listar, ver por ID, agregar, actualizar, eliminar).
+**Ventas** permite registrar (descuenta stock) y anular (devuelve stock).
+**Reportes** es de solo lectura.
+
+> Los textos se imprimen sin acentos a propósito (compatibilidad con consolas
+> antiguas); la salida se fuerza a UTF-8 para que sí se vean los acentos de los
+> **datos**.
 
 ## Tests
 
@@ -62,28 +98,60 @@ Cada entidad tiene su submenú: listar, ver por ID, agregar, actualizar y elimin
 python -m pytest -v
 ```
 
-- **Unitarios** (`tests/test_validaciones.py`): validan las funciones de
-  validación sin tocar la base.
-- **Integración** (`tests/test_integridad.py`): ejecutan CRUD real pero dentro
-  de una transacción que **se revierte al final**, así no quedan datos de prueba.
+- **Unitarios** (`tests/test_validaciones.py`): prueban las validaciones sin
+  tocar la base.
+- **Integración** (`tests/test_*.py`): ejecutan operaciones reales contra
+  PostgreSQL, pero dentro de una transacción que **se revierte al final**
+  (ver `tests/conftest.py`). Un fallo dentro de un test usa **savepoints**, así
+  no borra lo ya preparado en ese mismo test. No quedan datos de prueba.
 
-## Estructura
+Las **secuencias** de los `id` sí avanzan aunque el test se revierta (es normal:
+PostgreSQL no revierte los `nextval`).
+
+## Arquitectura
+
+La lógica de negocio está separada de la presentación:
+
+- Los módulos de dominio (`productos`, `proveedores`, ...) **no imprimen**:
+  devuelven datos o levantan una excepción.
+- `main.py` solo pide datos, muestra resultados y avisa de los errores.
+- Los errores son excepciones propias (`errores.py`), lo que permite reutilizar
+  la lógica en una futura interfaz gráfica o web sin reescribirla.
 
 | Archivo | Responsabilidad |
 |---|---|
-| `conexion.py` | Crear la conexión a PostgreSQL |
+| `conexion.py` | Crear la conexión (en `autocommit`) |
 | `config.py` | Leer el `.env` y exponer `DB_CONFIG` |
-| `base_datos.py` | Helpers genéricos `leer_db` / `commit_db` |
-| `productos.py` | Lógica y validaciones de productos |
-| `proveedores.py` | Lógica y validaciones de proveedores |
-| `clientes.py` | Lógica y validaciones de clientes (plantilla) |
+| `base_datos.py` | Acceso genérico + `transaccion()` (atomicidad) |
+| `errores.py` | Excepciones propias del sistema |
+| `validaciones.py` | Validaciones reutilizables (`validar_email`, etc.) |
+| `productos.py` | Lógica de productos |
+| `proveedores.py` | Lógica de proveedores |
+| `clientes.py` | Lógica de clientes |
+| `empleados.py` | Lógica de empleados |
+| `ventas.py` | Lógica de ventas (cabecera + líneas + stock) |
+| `reportes.py` | Consultas de solo lectura sobre las vistas |
 | `main.py` | Menú / punto de entrada |
+| `migrations/` | Cambios de estructura versionados |
 | `tests/` | Pruebas automáticas |
+
+## Transacciones (atomicidad)
+
+`base_datos.transaccion(db)` agrupa varias operaciones: se confirman todas
+juntas o se revierten todas. Es lo que hace que registrar una venta
+(cabecera + líneas + descuento de stock) nunca quede a medias:
+
+```python
+with transaccion(db):
+    ejecutar(db, "INSERT INTO ventas ...")
+    ejecutar(db, "INSERT INTO detalle_ventas ...")
+    ejecutar(db, "UPDATE productos SET stock = stock - %s ...")
+```
+
+Si ya hay una transacción en curso, usa un **SAVEPOINT** automáticamente.
 
 ## Nota sobre los `id`
 
-- `productos` y `proveedores` tienen **identidad** en la base (el `id` se genera solo).
-- `clientes` (y también `empleados`, `ventas`) **no** tienen auto-incremento.
-  Por eso `agregar_cliente` calcula el id con `COALESCE(MAX(id),0)+1`.
-  Es suficiente para practicar; para producción convendría una secuencia/IDENTITY
-  en la base de datos.
+Todos los `id` los genera la base de datos con `IDENTITY`
+(`clientes`, `empleados`, `ventas`, `productos`, `proveedores`) o son clave
+compuesta (`detalle_ventas`). El código **nunca** calcula el `id`.

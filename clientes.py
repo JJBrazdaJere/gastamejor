@@ -1,104 +1,61 @@
-"""Modulo de CLIENTES. Sirve de plantilla para los modulos que faltan.
+"""Logica de CLIENTES. No imprime: devuelve datos o levanta excepciones.
 
-OJO: la tabla "clientes" (a diferencia de productos y proveedores) NO tiene
-auto-incremento en el id. Por eso el id se genera con COALESCE(MAX(id),0)+1
-dentro del mismo INSERT. Limitacion: no es 100% seguro si hubiera muchos
-usuarios cargando a la vez; para produccion convendria una secuencia/IDENTITY.
+El id ya lo genera la base (IDENTITY). El telefono es opcional (columna NULL).
 """
 
-import re
+from base_datos import (
+    consultar,
+    consultar_uno,
+    ejecutar_afectando,
+    ejecutar_devolviendo,
+    transaccion,
+)
+from errores import ErrorValidacion
+from validaciones import validar_email, validar_texto, validar_texto_opcional
 
-from base_datos import commit_db, leer_db, estado_operacion
-
-formato = re.compile(r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
-
-
-def obtener_cliente(db, num):
-    return leer_db(db, "SELECT id, nombre, telefono, email FROM clientes WHERE id = %s;", (num,))
-
-
-def obtener_clientes(db):
-    return leer_db(db, "SELECT id, nombre, telefono, email FROM clientes ORDER BY id;")
+_COLUMNAS = "id, nombre, telefono, email"
 
 
-def mostrar_cliente(db, num=None):
-    if num:
-        cliente = obtener_cliente(db, num)
-    else:
-        cliente = obtener_clientes(db)
-    if cliente:
-        for id_cli, nombre, telefono, email in cliente:
-            print('id', id_cli, 'Nombre:', nombre, 'Telefono: ', telefono, 'email: ', email)
-    else:
-        print('Cliente no Encontrado')
+def listar_clientes(db):
+    return consultar(db, "SELECT " + _COLUMNAS + " FROM clientes ORDER BY id")
+
+
+def obtener_cliente(db, cliente_id):
+    return consultar_uno(
+        db, "SELECT " + _COLUMNAS + " FROM clientes WHERE id = %s", (cliente_id,)
+    )
 
 
 def agregar_cliente(db, nombre, email, telefono=None):
-    valido = 0
-    if validar_email(email):
-        valido += 1
-    else:
-        print('Error Email')
-    if validar_nombre(nombre):
-        valido += 1
-    else:
-        print('Error nombre')
-    if valido == 2:
-        return commit_db(
+    nombre = validar_texto(nombre, "nombre")
+    email = validar_email(email)
+    telefono = validar_texto_opcional(telefono)
+    with transaccion(db):
+        fila = ejecutar_devolviendo(
             db,
-            ("INSERT INTO clientes (id, nombre, telefono, email) "
-             "SELECT COALESCE(MAX(id), 0) + 1, %s, %s, %s FROM clientes RETURNING id;"),
+            "INSERT INTO clientes (nombre, telefono, email) VALUES (%s, %s, %s) RETURNING id",
             (nombre, telefono, email),
-            True,
         )
+    return fila[0]
 
 
-def _informar_actualizacion(resultado, campo):
-    estado = estado_operacion(resultado)
-    if estado == 'ok':
-        print(campo, 'actualizado correctamente')
-    elif estado == 'no_encontrado':
-        print('Cliente no encontrado')
-    # Si el estado es 'error', base_datos ya informo el detalle.
-
-
-def actualizar_cliente(db, cliente_id, nuevo_dato, dato):
-    # dato: 1 = nombre, 2 = telefono, 3 = email
-    if dato == 1:
-        if validar_nombre(nuevo_dato):
-            _informar_actualizacion(commit_db(db, "UPDATE clientes SET nombre =%s WHERE id= %s", (nuevo_dato, cliente_id)), 'Nombre')
-        else:
-            print('Error nombre')
-    elif dato == 2:
-        _informar_actualizacion(commit_db(db, "UPDATE clientes SET telefono =%s WHERE id= %s", (nuevo_dato, cliente_id)), 'Telefono')
-    elif dato == 3:
-        if validar_email(nuevo_dato):
-            _informar_actualizacion(commit_db(db, "UPDATE clientes SET email =%s WHERE id= %s", (nuevo_dato, cliente_id)), 'Email')
-        else:
-            print('Error email')
+def actualizar_cliente(db, cliente_id, campo, valor):
+    """campo: 'nombre', 'telefono' o 'email'."""
+    if campo == "nombre":
+        valor = validar_texto(valor, "nombre")
+        sql = "UPDATE clientes SET nombre = %s WHERE id = %s"
+    elif campo == "telefono":
+        valor = validar_texto_opcional(valor)
+        sql = "UPDATE clientes SET telefono = %s WHERE id = %s"
+    elif campo == "email":
+        valor = validar_email(valor)
+        sql = "UPDATE clientes SET email = %s WHERE id = %s"
     else:
-        print('las opciones son 1: Nombre 2: Telefono 3: Email')
+        raise ErrorValidacion("Campo invalido: use 'nombre', 'telefono' o 'email'.")
+    with transaccion(db):
+        ejecutar_afectando(db, sql, (valor, cliente_id))
 
 
 def eliminar_cliente(db, cliente_id):
-    resultado = commit_db(db, "DELETE FROM clientes WHERE id= %s", (cliente_id,))
-    estado = estado_operacion(resultado)
-    if estado == 'ok':
-        print('Cliente eliminado correctamente')
-    elif estado == 'no_encontrado':
-        print('Cliente no encontrado')
-    # Si el estado es 'error', base_datos ya informo el detalle.
-
-
-def validar_email(email):
-    if not email:
-        return False
-    return bool(formato.match(email))
-
-
-def validar_nombre(nombre):
-    nombre_aux = nombre.strip()
-    if not nombre_aux:
-        print('El nombre no puede estar vacio!. ')
-        return False
-    return True
+    with transaccion(db):
+        ejecutar_afectando(db, "DELETE FROM clientes WHERE id = %s", (cliente_id,))

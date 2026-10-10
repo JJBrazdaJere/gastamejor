@@ -1,60 +1,94 @@
+"""Acceso generico a PostgreSQL.
+
+Reglas de esta capa:
+  - NO imprime nada: devuelve datos o levanta una excepcion de `errores`.
+  - NO confirma (commit) por si sola. Para escribir se usa el context manager
+    `transaccion(db)`, que confirma todo junto o revierte todo si algo falla.
+
+Ese diseno permite operaciones ATOMICAS: por ejemplo, registrar una venta
+(cabecera + lineas + descuento de stock) como una sola unidad.
+"""
+
 import psycopg
 
-def leer_db(db, sql,variable = None):
-    cursor = db.cursor()
+from errores import ErrorBaseDatos, ErrorClaveForanea, ErrorNoEncontrado, ErrorUnico
+
+
+def transaccion(db):
+    """Agrupa operaciones: confirma al salir, revierte si hay cualquier error.
+
+    Uso:
+        with transaccion(db):
+            ejecutar(db, "UPDATE ...")
+            ejecutar(db, "INSERT ...")
+
+    Si ya hay una transaccion en curso, usa un SAVEPOINT automaticamente
+    (asi el fallo de una operacion interna no arrastra a las anteriores).
+
+    Devuelve el context manager de psycopg (no es un generador): se usa
+    siempre como `with transaccion(db):`.
+    """
+    return db.transaction()
+
+
+def _traducir(error):
+    """Convierte un error de psycopg en una excepcion propia y clara."""
+    if isinstance(error, psycopg.errors.UniqueViolation):
+        return ErrorUnico("Ya existe un registro con ese valor unico (por ej. email duplicado).")
+    if isinstance(error, psycopg.errors.ForeignKeyViolation):
+        return ErrorClaveForanea("El registro relacionado no existe o tiene datos asociados.")
+    if isinstance(error, psycopg.errors.ExclusionViolation):
+        return ErrorBaseDatos("Ese registro se solapa con otro (restriccion de exclusion).")
+    if isinstance(error, psycopg.errors.CheckViolation):
+        return ErrorBaseDatos("Un valor no cumple las reglas de la base de datos (CHECK).")
+    if isinstance(error, psycopg.errors.NotNullViolation):
+        return ErrorBaseDatos("Falta un dato obligatorio (NOT NULL).")
+    return ErrorBaseDatos(str(error))
+
+
+def consultar(db, sql, parametros=None):
+    """SELECT que devuelve TODAS las filas (lista de tuplas)."""
     try:
-        if variable != None:
-            cursor.execute(sql, variable)
-        else:
-            cursor.execute(sql)
-        return cursor.fetchall()
-    except psycopg.Error:
-        db.rollback()
-        print("ocurrio un error en la base de datos")
-        return None
-    finally:
-        cursor.close()
+        with db.cursor() as cursor:
+            cursor.execute(sql, parametros)
+            return cursor.fetchall()
+    except psycopg.Error as error:
+        raise _traducir(error) from error
 
-def commit_db(db, sql,variable = None, devuelve= False):
-    # Devuelve:
-    #   None  -> ocurrio un error (el detalle ya se imprime aca)
-    #   int   -> cantidad de filas afectadas (UPDATE / DELETE)
-    #   tupla -> fila devuelta por "RETURNING" (INSERT ... RETURNING id)
-    cursor = db.cursor()
+
+def consultar_uno(db, sql, parametros=None):
+    """SELECT que devuelve UNA fila (tupla) o None si no hay resultados."""
     try:
-        if variable != None:
-            cursor.execute(sql, variable)
-        else:
-            cursor.execute(sql)
+        with db.cursor() as cursor:
+            cursor.execute(sql, parametros)
+            return cursor.fetchone()
+    except psycopg.Error as error:
+        raise _traducir(error) from error
 
-        # Leemos el resultado ANTES de confirmar. Es necesario para los INSERT
-        # con "RETURNING id": si se confirma primero, el resultado puede perderse.
-        resultado = cursor.fetchone() if devuelve else cursor.rowcount
 
-        db.commit()
-        return resultado
-    except psycopg.errors.ForeignKeyViolation:
-        db.rollback()
-        print("Error: el registro relacionado no existe (clave foranea). ")
-    except psycopg.errors.UniqueViolation:
-        db.rollback()
-        print("Error: ya existe un registro con ese valor unico (por ej. email duplicado). ")
-    except psycopg.Error as e:
-        db.rollback()
-        print("ocurrio un error en la base de datos. ")
-        print(e)
-    finally:
-        cursor.close()
+def ejecutar(db, sql, parametros=None):
+    """INSERT / UPDATE / DELETE. Devuelve la cantidad de filas afectadas."""
+    try:
+        with db.cursor() as cursor:
+            cursor.execute(sql, parametros)
+            return cursor.rowcount
+    except psycopg.Error as error:
+        raise _traducir(error) from error
 
-def estado_operacion(resultado):
-    # Traduce el valor que devuelve commit_db a un estado legible,
-    # para no confundir un ERROR con un registro "no encontrado".
-    #   'error'         -> None  (ya se informo el detalle en consola)
-    #   'no_encontrado' -> 0 filas afectadas
-    #   'ok'            -> se afectaron filas (o vino una tupla de RETURNING)
-    if resultado is None:
-        return 'error'
-    if resultado == 0:
-        return 'no_encontrado'
-    return 'ok'
- 
+
+def ejecutar_devolviendo(db, sql, parametros=None):
+    """Como ejecutar(), pero para sentencias con RETURNING. Devuelve la fila."""
+    try:
+        with db.cursor() as cursor:
+            cursor.execute(sql, parametros)
+            return cursor.fetchone()
+    except psycopg.Error as error:
+        raise _traducir(error) from error
+
+
+def ejecutar_afectando(db, sql, parametros=None):
+    """Como ejecutar(), pero si no afecto ninguna fila levanta ErrorNoEncontrado."""
+    filas = ejecutar(db, sql, parametros)
+    if filas == 0:
+        raise ErrorNoEncontrado("No se encontro el registro para modificar o eliminar.")
+    return filas

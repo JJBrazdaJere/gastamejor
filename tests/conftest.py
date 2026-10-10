@@ -35,6 +35,11 @@ def db():
     # abierta y jamás se confirma. Al final el rollback lo descarta todo.
     conexion.commit = (lambda: None)
 
+    # Forzamos una transacción externa. Así las operaciones del programa,
+    # al detectar que ya hay una transacción en curso, usan SAVEPOINTs: si
+    # una falla, solo se revierte esa operación y no lo ya hecho en el test.
+    conexion.execute("SELECT 1")
+
     yield conexion
 
     conexion.rollback()
