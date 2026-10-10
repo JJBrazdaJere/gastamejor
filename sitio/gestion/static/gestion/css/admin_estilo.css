@@ -1,0 +1,196 @@
+/* ============================================================
+   Estilo del admin inspirado en tiendas tipo Mercado Libre.
+   Paleta PROPIA (no copia la marca). Solo presentacion:
+   no toca datos, modelos ni logica.
+
+   Se carga despues de admin/css/base.css y dark_mode.css
+   (via el bloque extrastyle de base_site.html), asi que estas
+   variables pisan las de Django.
+   ============================================================ */
+
+:root {
+    /* --- Nuestra paleta --- */
+    --marca-ambar: #ffc53d;
+    --marca-azul: #2d6cdf;
+    --marca-azul-oscuro: #1f52b0;
+    --fondo: #f1f2f4;
+    --tarjeta: #ffffff;
+    --borde: #e5e7eb;
+    --texto: #2b2b2b;
+    --texto-suave: #6b7280;
+
+    /* --- Variables del admin de Django --- */
+    --primary: var(--marca-azul);
+    --secondary: var(--marca-azul-oscuro);
+    --accent: var(--marca-ambar);
+    --primary-fg: #ffffff;
+
+    --body-fg: var(--texto);
+    --body-bg: var(--tarjeta);
+    --body-quiet-color: var(--texto-suave);
+    --body-medium-color: #4b5563;
+    --body-loud-color: #111827;
+
+    --header-color: #2b2b2b;
+    --header-branding-color: #2b2b2b;
+    --header-bg: var(--marca-ambar);
+    --header-link-color: #2b2b2b;
+
+    --breadcrumbs-fg: var(--texto-suave);
+    --breadcrumbs-link-fg: var(--marca-azul);
+    --breadcrumbs-bg: var(--fondo);
+
+    --link-fg: var(--marca-azul);
+    --link-hover-color: var(--marca-azul-oscuro);
+    --link-selected-fg: var(--marca-azul-oscuro);
+
+    --hairline-color: var(--borde);
+    --border-color: #d1d5db;
+    --selected-bg: #fff4d6;
+    --selected-row: #fff4d6;
+
+    --button-fg: #ffffff;
+    --button-bg: var(--marca-azul);
+    --button-hover-bg: var(--marca-azul-oscuro);
+    --default-button-bg: var(--marca-azul);
+    --default-button-hover-bg: var(--marca-azul-oscuro);
+    --close-button-bg: #6b7280;
+    --close-button-hover-bg: #4b5563;
+    --delete-button-bg: #d64545;
+    --delete-button-hover-bg: #b23434;
+
+    --object-tools-fg: #ffffff;
+    --object-tools-bg: var(--marca-azul);
+    --object-tools-hover-bg: var(--marca-azul-oscuro);
+}
+
+/* ---------- Modo oscuro: version propia y coherente ---------- */
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]) {
+        --fondo: #0f141b;
+        --tarjeta: #171d26;
+        --borde: #2a3340;
+        --texto: #e5e7eb;
+        --texto-suave: #9aa4b2;
+
+        --body-fg: var(--texto);
+        --body-bg: var(--tarjeta);
+        --body-quiet-color: var(--texto-suave);
+        --body-medium-color: #cbd2da;
+        --body-loud-color: #ffffff;
+
+        --header-bg: #3a2f10;
+        --header-color: #ffd75e;
+        --header-branding-color: #ffd75e;
+        --header-link-color: #ffd75e;
+
+        --breadcrumbs-fg: var(--texto-suave);
+        --breadcrumbs-link-fg: #7ea8ff;
+        --breadcrumbs-bg: var(--fondo);
+
+        --link-fg: #7ea8ff;
+        --link-hover-color: #a8c4ff;
+        --link-selected-fg: #a8c4ff;
+
+        --hairline-color: var(--borde);
+        --border-color: #3a4450;
+        --selected-bg: #2a3340;
+        --selected-row: #2a3340;
+    }
+}
+
+html[data-theme="dark"] {
+    --fondo: #0f141b;
+    --tarjeta: #171d26;
+    --borde: #2a3340;
+    --texto: #e5e7eb;
+    --texto-suave: #9aa4b2;
+
+    --body-fg: var(--texto);
+    --body-bg: var(--tarjeta);
+    --body-quiet-color: var(--texto-suave);
+    --body-medium-color: #cbd2da;
+    --body-loud-color: #ffffff;
+
+    --header-bg: #3a2f10;
+    --header-color: #ffd75e;
+    --header-branding-color: #ffd75e;
+    --header-link-color: #ffd75e;
+
+    --breadcrumbs-fg: var(--texto-suave);
+    --breadcrumbs-link-fg: #7ea8ff;
+    --breadcrumbs-bg: var(--fondo);
+
+    --link-fg: #7ea8ff;
+    --link-hover-color: #a8c4ff;
+    --link-selected-fg: #a8c4ff;
+
+    --hairline-color: var(--borde);
+    --border-color: #3a4450;
+    --selected-bg: #2a3340;
+    --selected-row: #2a3340;
+}
+
+/* ---------- Fondo gris y contenido como "tarjeta" ---------- */
+body {
+    background: var(--fondo);
+}
+
+#content {
+    background: var(--tarjeta);
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 16px 24px 24px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 1px 3px rgba(16, 24, 40, .06);
+}
+
+/* ---------- Encabezado (barra de marca) ---------- */
+#header {
+    box-shadow: 0 1px 3px rgba(16, 24, 40, .12);
+}
+#branding #site-name a {
+    font-weight: 800;
+    letter-spacing: .2px;
+}
+#user-tools a {
+    text-decoration: underline;
+}
+#user-tools a:hover {
+    text-decoration: none;
+}
+
+/* ---------- Migas de pan sobre el gris ---------- */
+.breadcrumbs {
+    padding: 12px 24px 0;
+}
+
+/* ---------- Botones y controles redondeados ---------- */
+input[type="submit"],
+input[type="button"],
+button,
+.button,
+select,
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="url"],
+input[type="number"],
+textarea {
+    border-radius: 8px;
+}
+
+/* ---------- Listados: encabezado de tabla y hover ---------- */
+#changelist table thead th {
+    background: var(--fondo);
+    color: #374151;
+}
+#changelist table tbody tr:hover {
+    background: rgba(45, 108, 223, .06);
+}
+
+/* ---------- Login: tarjeta centrada ---------- */
+.login #content {
+    max-width: 420px;
+    margin: 48px auto;
+}

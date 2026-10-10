@@ -151,6 +151,22 @@ Qué podés hacer:
 Las tablas internas de Django (`django_*`, `auth_*`, `sessions`) sí se crean
 con `migrate`; son las únicas que Django administra.
 
+### Estilo del panel (inspirado en tiendas tipo Mercado Libre)
+
+El admin tiene una **capa de estilo propia** (paleta propia, sin dependencias ni
+build). Solo es presentación: no cambia modelos, datos ni reglas.
+
+- `sitio/templates/admin/base_site.html`: sobreescribe la plantilla del admin
+  para cargar el CSS (vía el bloque `extrastyle`).
+- `sitio/gestion/static/gestion/css/admin_estilo.css`: redefine las
+  **variables CSS** del admin (encabezado ámbar, botones/enlaces azules, fondo
+  gris, contenido en tarjeta) e incluye una versión para **modo oscuro**.
+- `sitio/sitio/settings.py`: agrega `BASE_DIR / "templates"` a
+  `TEMPLATES["DIRS"]` para que la plantilla propia gane a la de Django.
+
+El **catálogo público** (`/`, estilo Pinterest) usa sus propios archivos y no se
+ve afectado.
+
 ## Catálogo visual (estilo Pinterest)
 
 En la **raíz** del sitio (`/`) hay un catálogo visual **público** que muestra los
