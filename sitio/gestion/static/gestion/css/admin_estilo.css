@@ -194,3 +194,190 @@ textarea {
     max-width: 420px;
     margin: 48px auto;
 }
+
+/* ============================================================
+   Botones de accion (F2)
+   Iconos como SVG incrustado (data URI): sin archivos ni red.
+   ============================================================ */
+
+:root {
+    --ico-guardar: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6 9 17l-5-5'/></svg>");
+    --ico-agregar: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%232d6cdf' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M12 5v14M5 12h14'/></svg>");
+    --ico-editar: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%232d6cdf' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 20h9'/><path d='M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z'/></svg>");
+    --ico-eliminar: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 6h18'/><path d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/><path d='M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6'/><path d='M10 11v6M14 11v6'/></svg>");
+    --ico-cerrar: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M18 6 6 18M6 6l12 12'/></svg>");
+
+    --btn-sec-bg: #ffffff;
+    --btn-sec-fg: #2d6cdf;
+    --btn-sec-borde: #bcd0f7;
+    --btn-sec-hover: #eef3fe;
+}
+
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]) {
+        --btn-sec-bg: #1b2330;
+        --btn-sec-fg: #8fb2ff;
+        --btn-sec-borde: #33507f;
+        --btn-sec-hover: #223047;
+    }
+}
+
+html[data-theme="dark"] {
+    --btn-sec-bg: #1b2330;
+    --btn-sec-fg: #8fb2ff;
+    --btn-sec-borde: #33507f;
+    --btn-sec-hover: #223047;
+}
+
+/* ---------- Barra de botones del formulario ---------- */
+.submit-row {
+    background: var(--tarjeta);
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+    padding: 14px 16px;
+    align-items: center;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .04);
+}
+
+/* Forma base comun */
+.submit-row input[type="submit"],
+.submit-row a.closelink,
+.submit-row a.deletelink {
+    box-sizing: border-box;
+    height: 40px;
+    padding: 0 18px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color .15s, border-color .15s, box-shadow .15s, transform .06s;
+}
+
+.submit-row a.closelink,
+.submit-row a.deletelink {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+/* --- Principal: Guardar --- */
+.submit-row input.default {
+    background-color: var(--marca-azul);
+    border-color: var(--marca-azul);
+    color: #ffffff;
+    text-transform: none;
+    letter-spacing: .2px;
+    box-shadow: 0 1px 2px rgba(45, 108, 223, .35);
+}
+.submit-row input.default:hover {
+    background-color: var(--marca-azul-oscuro);
+    border-color: var(--marca-azul-oscuro);
+}
+.submit-row input.default:active {
+    transform: translateY(1px);
+}
+
+/* --- Secundarios: Guardar y agregar / Guardar y continuar --- */
+.submit-row input[type="submit"]:not(.default) {
+    background-color: var(--btn-sec-bg);
+    border-color: var(--btn-sec-borde);
+    color: var(--btn-sec-fg);
+}
+.submit-row input[type="submit"]:not(.default):hover {
+    background-color: var(--btn-sec-hover);
+    border-color: var(--btn-sec-fg);
+}
+
+/* --- Iconos: los <input> no admiten ::before, asi que van de fondo --- */
+.submit-row input.default,
+.submit-row input[type="submit"]:not(.default) {
+    background-repeat: no-repeat;
+    background-position: left 14px center;
+    background-size: 18px 18px;
+    padding-left: 42px;
+    padding-right: 18px;
+}
+.submit-row input.default {
+    background-image: var(--ico-guardar);
+}
+.submit-row input[name="_addanother"] {
+    background-image: var(--ico-agregar);
+}
+.submit-row input[name="_continue"] {
+    background-image: var(--ico-editar);
+}
+
+/* --- Eliminar y Cerrar (son enlaces) --- */
+.submit-row a.deletelink {
+    background-color: #d64545;
+    background-image: var(--ico-eliminar);
+    background-repeat: no-repeat;
+    background-position: left 14px center;
+    background-size: 18px 18px;
+    padding: 0 18px 0 42px;
+    color: #ffffff;
+    margin-left: auto;
+}
+.submit-row a.deletelink:hover,
+.submit-row a.deletelink:focus {
+    background-color: #b23434;
+    color: #ffffff;
+}
+
+.submit-row a.closelink {
+    background-color: transparent;
+    background-image: var(--ico-cerrar);
+    background-repeat: no-repeat;
+    background-position: left 14px center;
+    background-size: 18px 18px;
+    padding: 0 18px 0 42px;
+    border-color: var(--borde);
+    color: var(--texto-suave);
+}
+.submit-row a.closelink:hover,
+.submit-row a.closelink:focus {
+    background-color: rgba(107, 114, 128, .12);
+    color: var(--texto);
+}
+
+/* ---------- Herramientas de objeto: "Agregar ..." / "Historia" ---------- */
+.object-tools a:link,
+.object-tools a:visited {
+    background-color: var(--object-tools-bg);
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    transition: background-color .15s, box-shadow .15s, transform .06s;
+}
+.object-tools a.addlink {
+    padding-right: 30px;
+    background-position: right 10px center;
+}
+.object-tools a:hover,
+.object-tools a:focus {
+    background-color: var(--object-tools-hover-bg);
+    box-shadow: 0 2px 6px rgba(16, 24, 40, .16);
+}
+
+/* ---------- Boton "Ejecutar" de las acciones del listado ---------- */
+.actions .button {
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 8px;
+    font-weight: 700;
+}
+
+/* ---------- Foco visible (accesibilidad) ---------- */
+.submit-row input:focus-visible,
+.submit-row a:focus-visible,
+.object-tools a:focus-visible,
+.actions .button:focus-visible,
+input[type="submit"]:focus-visible,
+button:focus-visible,
+.button:focus-visible {
+    outline: 3px solid rgba(45, 108, 223, .45);
+    outline-offset: 2px;
+}

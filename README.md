@@ -160,7 +160,9 @@ build). Solo es presentación: no cambia modelos, datos ni reglas.
   para cargar el CSS (vía el bloque `extrastyle`).
 - `sitio/gestion/static/gestion/css/admin_estilo.css`: redefine las
   **variables CSS** del admin (encabezado ámbar, botones/enlaces azules, fondo
-  gris, contenido en tarjeta) e incluye una versión para **modo oscuro**.
+  gris, contenido en tarjeta), estiliza los **botones de acción** (Guardar,
+  Guardar y continuar, Eliminar, Cerrar...) con **íconos SVG incrustados** y da
+  una versión para **modo oscuro**.
 - `sitio/sitio/settings.py`: agrega `BASE_DIR / "templates"` a
   `TEMPLATES["DIRS"]` para que la plantilla propia gane a la de Django.
 
