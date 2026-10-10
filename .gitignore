@@ -1,0 +1,15 @@
+# --- Secretos (NUNCA subir) ---
+.env
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# --- Editores / Sistema ---
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
