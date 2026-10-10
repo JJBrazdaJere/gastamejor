@@ -1,0 +1,55 @@
+{% extends "gestion/base.html" %}
+{% load pinterest %}
+
+{% block titulo %}Productos · API SQL-PY{% endblock %}
+
+{% block contenido %}
+<section class="tableros" aria-label="Categorias">
+  <a class="chip {% if not categoria_activa %}chip-activo{% endif %}"
+     href="{% url 'gestion:catalogo' %}{% if q %}?q={{ q|urlencode }}{% endif %}">Todos</a>
+  {% for cat in categorias %}
+    <a class="chip {% if cat == categoria_activa %}chip-activo{% endif %}"
+       href="{% url 'gestion:catalogo' %}?categoria={{ cat|urlencode }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}">{{ cat }}</a>
+  {% endfor %}
+</section>
+
+{% if q or categoria_activa %}
+  <p class="resumen">
+    {% if q %}Resultados para <strong>&ldquo;{{ q }}&rdquo;</strong>{% endif %}
+    {% if categoria_activa %}{% if q %} en {% endif %}<strong>{{ categoria_activa }}</strong>{% endif %}
+    &middot; {{ productos|length }} producto{{ productos|length|pluralize }}
+  </p>
+{% endif %}
+
+<section class="grilla">
+  {% for p in productos %}
+    <article class="pin">
+      <a class="pin-enlace" href="{% url 'gestion:detalle' p.id %}">
+        <div class="pin-imagen"
+             style="background: {{ p.nombre|gradiente }}; height: {{ p.nombre|altura }}px;">
+          <span class="pin-inicial">{{ p.nombre|first|upper }}</span>
+          {% if p.stock <= 0 %}
+            <span class="badge badge-agotado">Agotado</span>
+          {% elif p.stock <= umbral_stock_bajo %}
+            <span class="badge badge-bajo">Stock bajo</span>
+          {% else %}
+            <span class="badge badge-ok">{{ p.stock }} en stock</span>
+          {% endif %}
+        </div>
+        <div class="pin-cuerpo">
+          <h3 class="pin-titulo">{{ p.nombre }}</h3>
+          <span class="pin-categoria">{{ p.categoria }}</span>
+          <span class="pin-precio">$ {{ p.precio|floatformat:2 }}</span>
+        </div>
+      </a>
+    </article>
+  {% empty %}
+    <div class="vacio">
+      <div class="vacio-emoji">&#128269;</div>
+      <h2>Sin resultados</h2>
+      <p>No encontramos productos para esa búsqueda. Probá con otra palabra o categoría.</p>
+      <a class="boton" href="{% url 'gestion:catalogo' %}">Ver todo</a>
+    </div>
+  {% endfor %}
+</section>
+{% endblock %}

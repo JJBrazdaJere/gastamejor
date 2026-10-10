@@ -1,0 +1,43 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}API SQL-PY{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'gestion/css/pinterest.css' %}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23e63946'/><text x='50' y='69' font-size='58' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>P</text></svg>">
+</head>
+<body>
+  <header class="topbar" id="topbar">
+    <a class="marca" href="{% url 'gestion:catalogo' %}">
+      <span class="marca-logo">P</span>
+      <span class="marca-texto">API SQL-PY</span>
+    </a>
+
+    <form class="buscador" method="get" action="{% url 'gestion:catalogo' %}" role="search">
+      <svg class="buscador-icono" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M10 2a8 8 0 105.29 14.29l4.53 4.53 1.41-1.41-4.53-4.53A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/>
+      </svg>
+      <input type="search" name="q" value="{{ q|default:'' }}"
+             placeholder="Buscar productos o categorias" aria-label="Buscar">
+      {% if categoria_activa %}<input type="hidden" name="categoria" value="{{ categoria_activa }}">{% endif %}
+    </form>
+
+    <nav class="acciones">
+      <a class="accion" href="{% url 'admin:index' %}">
+        <span class="accion-icono">&#9881;</span><span class="accion-texto">Admin</span>
+      </a>
+    </nav>
+  </header>
+
+  <main class="contenido">
+    {% block contenido %}{% endblock %}
+  </main>
+
+  <footer class="pie">
+    <p>API SQL-PY · catálogo visual con estilo propio inspirado en tableros tipo Pinterest.</p>
+  </footer>
+
+  <script src="{% static 'gestion/js/pinterest.js' %}"></script>
+</body>
+</html>

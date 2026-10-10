@@ -2,8 +2,9 @@
 
 Sistema de gestión en Python conectado a PostgreSQL. Maneja **productos**,
 **proveedores**, **clientes**, **empleados** y **ventas**, más **reportes**
-de solo lectura. Tiene un **CLI** (menú en consola) y una **interfaz web**
-(admin de Django).
+de solo lectura. Tiene un **CLI** (menú en consola) y una **interfaz web**:
+un **catálogo visual público** con estilo de tableros (inspirado en Pinterest)
+y el **admin de Django**.
 
 El objetivo del proyecto es ser **robusto y seguro**: validaciones centralizadas,
 manejo de errores con excepciones, operaciones atómicas y credenciales fuera
@@ -150,6 +151,34 @@ Qué podés hacer:
 Las tablas internas de Django (`django_*`, `auth_*`, `sessions`) sí se crean
 con `migrate`; son las únicas que Django administra.
 
+## Catálogo visual (estilo Pinterest)
+
+En la **raíz** del sitio (`/`) hay un catálogo visual **público** que muestra los
+**productos como "pines"** y las **categorías como "tableros"**. El admin sigue
+en `/admin/`. Es una capa **de presentación**: no toca la base ni la lógica de
+ventas/stock.
+
+- **Buscador** por nombre o categoría (`/?q=...`).
+- **Filtro por categoría** con "chips" (`/?categoria=...`).
+- **Grilla de mampostería** con columnas responsivas.
+- **Tarjetas con degradado CSS** (sin imágenes ni dependencias): el color y el
+  alto de cada tarjeta se derivan del nombre del producto, así que son
+  **estables** y no hace falta guardar nada.
+- **Ficha de detalle** (`/producto/<id>/`) con un botón **"Editar en admin"**.
+
+Solo se exponen datos de **productos** (nombre, categoría, precio, stock,
+proveedor). No se publican clientes ni empleados.
+
+Cómo está hecho (sin dependencias ni paso de compilación):
+
+| Archivo | Responsabilidad |
+|---|---|
+| `sitio/gestion/urls.py` | Rutas `/` y `/producto/<id>/` |
+| `sitio/gestion/views.py` | Vistas `catalogo` (buscador + filtro) y `detalle` |
+| `sitio/gestion/templatetags/pinterest.py` | Filtros `gradiente` y `altura` (color/alto estable por nombre) |
+| `sitio/gestion/templates/gestion/` | `base.html`, `catalogo.html`, `producto_detalle.html` |
+| `sitio/gestion/static/gestion/` | `css/pinterest.css` y `js/pinterest.js` |
+
 ## Tests
 
 ```powershell
@@ -192,7 +221,7 @@ La lógica de negocio está separada de la presentación:
 | `main.py` | Menú / punto de entrada |
 | `migrations/` | Cambios de estructura versionados |
 | `tests/` | Pruebas automáticas |
-| `sitio/` | Proyecto Django (admin web); modelos `managed=False` |
+| `sitio/` | Proyecto Django: catálogo visual público (`/`) y admin (`/admin/`); modelos `managed=False` |
 | `backups/` | Respaldos `pg_dump` (fuera de Git) |
 
 ## Transacciones (atomicidad)
