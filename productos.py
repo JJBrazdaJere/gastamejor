@@ -1,4 +1,4 @@
-from base_datos import commit_db, leer_db
+from base_datos import commit_db, leer_db, estado_operacion
 
 def obtener_producto(db, num):
     return leer_db(db,"SELECT nombre, precio, stock FROM productos WHERE id = %s",(num,))
@@ -35,32 +35,34 @@ def agregar_producto(db, nombre, categoria, precio, stock, proveedor_id):
     if valido == 4:
         return commit_db(db,("INSERT INTO productos (nombre, categoria, precio, stock, proveedor_id) VALUES (%s, %s, %s, %s, %s) RETURNING id;"),(nombre, categoria, precio, stock, proveedor_id), True)
 
+def _informar_actualizacion(resultado, campo):
+    estado = estado_operacion(resultado)
+    if estado == 'ok':
+        print(campo, 'actualizado correctamente')
+    elif estado == 'no_encontrado':
+        print('Producto no encontrado')
+    # Si el estado es 'error', base_datos ya informo el detalle.
+
 def actualizar_stock(db,producto_id, nuevo_stock):
     if validar_stock(nuevo_stock):
         resultado = commit_db(db,"UPDATE productos SET stock =%s WHERE id= %s",(nuevo_stock,producto_id))
-        if resultado:
-            print('Stock actualizado correctamente')
-        else:
-            print('Producto no encontrado')
+        _informar_actualizacion(resultado, 'Stock')
 
 def actualizar_producto(db, producto_id, nuevo_dato, dato):
     # dato: 1 = nombre, 2 = categoria, 3 = precio
     if dato == 1:
         if validar_nombre(nuevo_dato):
-            resultado = commit_db(db,"UPDATE productos SET nombre=%s WHERE id= %s",(nuevo_dato,producto_id))
-            print('Nombre actualizado correctamente' if resultado else 'Producto no encontrado')
+            _informar_actualizacion(commit_db(db,"UPDATE productos SET nombre=%s WHERE id= %s",(nuevo_dato,producto_id)), 'Nombre')
         else:
             print('Error nombre')
     elif dato == 2:
         if validar_categoria(nuevo_dato):
-            resultado = commit_db(db,"UPDATE productos SET categoria=%s WHERE id= %s",(nuevo_dato,producto_id))
-            print('Categoria actualizada correctamente' if resultado else 'Producto no encontrado')
+            _informar_actualizacion(commit_db(db,"UPDATE productos SET categoria=%s WHERE id= %s",(nuevo_dato,producto_id)), 'Categoria')
         else:
             print('Error categoria')
     elif dato == 3:
         if validar_precio(nuevo_dato):
-            resultado = commit_db(db,"UPDATE productos SET precio=%s WHERE id= %s",(nuevo_dato,producto_id))
-            print('Precio actualizado correctamente' if resultado else 'Producto no encontrado')
+            _informar_actualizacion(commit_db(db,"UPDATE productos SET precio=%s WHERE id= %s",(nuevo_dato,producto_id)), 'Precio')
         else:
             print('Error precio')
     else:
@@ -68,10 +70,12 @@ def actualizar_producto(db, producto_id, nuevo_dato, dato):
 
 def eliminar_producto(db,producto_id):
     resultado = commit_db(db,"DELETE FROM productos WHERE id= %s",(producto_id,))
-    if resultado:
+    estado = estado_operacion(resultado)
+    if estado == 'ok':
         print('Producto eliminado correctamente')
-    else:
+    elif estado == 'no_encontrado':
         print('Producto no encontrado')
+    # Si el estado es 'error', base_datos ya informo el detalle.
      
 def validar_stock(stock):
     if stock < 0:

@@ -1,5 +1,5 @@
 import re
-from base_datos import commit_db, leer_db
+from base_datos import commit_db, leer_db, estado_operacion
 
 formato = re.compile(r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
 
@@ -37,40 +37,38 @@ def agregar_proveedor(db, nombre, email, telefono):
     if valido == 3:
         return commit_db(db,("INSERT INTO proveedores (nombre, telefono, email) VALUES (%s, %s, %s) RETURNING id;"),(nombre, telefono, email), True)#true para el returning ID
 
+def _informar_actualizacion(resultado, campo):
+    estado = estado_operacion(resultado)
+    if estado == 'ok':
+        print(campo, 'actualizado correctamente')
+    elif estado == 'no_encontrado':
+        print('Proveedor no encontrado')
+    # Si el estado es 'error', base_datos ya informo el detalle.
+
 def actualizar_proveedor(db,proveedor_id,nuevo_dato,dato):
     if dato == 1:
         if validar_nombre(nuevo_dato):
-            resultado = commit_db(db,"UPDATE proveedores SET nombre =%s WHERE id= %s",(nuevo_dato,proveedor_id))
-            if resultado:
-                print('Nombre actualizado correctamente')
-            else:
-                print('Proveedor no encontrado')
+            _informar_actualizacion(commit_db(db,"UPDATE proveedores SET nombre =%s WHERE id= %s",(nuevo_dato,proveedor_id)), 'Nombre')
         else:
             print('Error nombre')
     elif dato == 2:
-            resultado = commit_db(db,"UPDATE proveedores SET telefono =%s WHERE id= %s",(nuevo_dato,proveedor_id))
-            if resultado:
-                print('Telefono actualizado correctamente')
-            else:
-                print('Proveedor no encontrado')
+        _informar_actualizacion(commit_db(db,"UPDATE proveedores SET telefono =%s WHERE id= %s",(nuevo_dato,proveedor_id)), 'Telefono')
     elif dato == 3:
-            if validar_email(nuevo_dato):
-                resultado = commit_db(db,"UPDATE proveedores SET email =%s WHERE id= %s",(nuevo_dato,proveedor_id))
-                if resultado:
-                    print('Email actualizado correctamente')
-                else:
-                    print('Proveedor no encontrado')
-            else:
-                print('Error email')
+        if validar_email(nuevo_dato):
+            _informar_actualizacion(commit_db(db,"UPDATE proveedores SET email =%s WHERE id= %s",(nuevo_dato,proveedor_id)), 'Email')
+        else:
+            print('Error email')
     else:
         print('las opciones son 1: Nombre 2: Telefono 3: Email')
 
 def eliminar_proveedor(db,proveedor_id):
     resultado = commit_db(db,"DELETE FROM proveedores WHERE id= %s",(proveedor_id,))
-    if resultado:
+    estado = estado_operacion(resultado)
+    if estado == 'ok':
         print('Proveedor eliminado correctamente')
-    else:
+    elif estado == 'no_encontrado':
         print('Proveedor no encontrado')
+    # Si el estado es 'error', base_datos ya informo el detalle.
      
 def validar_email(email):
     if not email:

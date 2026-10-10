@@ -1,8 +1,8 @@
 # API SQL-PY
 
 Sistema de gestión en Python conectado a PostgreSQL. Por ahora maneja
-**productos** y **proveedores**; está pensado para seguir agregando módulos
-(clientes, empleados, ventas...).
+**productos**, **proveedores** y **clientes**; está pensado para seguir
+agregando módulos (empleados, ventas...).
 
 ## Requisitos
 
@@ -76,5 +76,14 @@ python -m pytest -v
 | `base_datos.py` | Helpers genéricos `leer_db` / `commit_db` |
 | `productos.py` | Lógica y validaciones de productos |
 | `proveedores.py` | Lógica y validaciones de proveedores |
+| `clientes.py` | Lógica y validaciones de clientes (plantilla) |
 | `main.py` | Menú / punto de entrada |
 | `tests/` | Pruebas automáticas |
+
+## Nota sobre los `id`
+
+- `productos` y `proveedores` tienen **identidad** en la base (el `id` se genera solo).
+- `clientes` (y también `empleados`, `ventas`) **no** tienen auto-incremento.
+  Por eso `agregar_cliente` calcula el id con `COALESCE(MAX(id),0)+1`.
+  Es suficiente para practicar; para producción convendría una secuencia/IDENTITY
+  en la base de datos.

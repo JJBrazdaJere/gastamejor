@@ -1,8 +1,8 @@
 """Punto de entrada del sistema de gestion.
 
 Muestra un menu, lee la opcion del usuario y llama a las funciones de los
-modulos de dominio (productos y proveedores). Las credenciales se leen del
-archivo ".env" a traves de config.DB_CONFIG (no estan en el codigo).
+modulos de dominio (productos, proveedores y clientes). Las credenciales se
+leen del archivo ".env" a traves de config.DB_CONFIG (no estan en el codigo).
 
 Para agregar un modulo nuevo (clientes, empleados, ventas...):
   1. Crear el archivo del modulo (ej: clientes.py).
@@ -15,8 +15,22 @@ consola de Windows (cp850) no los muestra bien.
 
 import sys
 
+# Fuerza salida/entrada en UTF-8, para que los datos con acentos (ej. nombres
+# en la base) se vean bien tambien cuando la salida se redirige a un archivo.
+for _stream in (sys.stdout, sys.stderr, sys.stdin):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
 from config import DB_CONFIG, variables_faltantes
 from conexion import conectar_db
+from clientes import (
+    agregar_cliente,
+    actualizar_cliente,
+    eliminar_cliente,
+    mostrar_cliente,
+)
 from productos import (
     agregar_producto,
     actualizar_producto,
@@ -150,6 +164,45 @@ def menu_proveedores(db):
 
 
 # ---------------------------------------------------------------------------
+# Menu de CLIENTES
+# ---------------------------------------------------------------------------
+def menu_clientes(db):
+    while True:
+        print("\n--- CLIENTES ---")
+        print("1) Listar todos")
+        print("2) Ver por ID")
+        print("3) Agregar")
+        print("4) Actualizar nombre / telefono / email")
+        print("5) Eliminar")
+        print("0) Volver")
+        opcion = pedir_entero("Opcion: ")
+
+        if opcion == 1:
+            mostrar_cliente(db)
+        elif opcion == 2:
+            mostrar_cliente(db, pedir_entero("ID del cliente: "))
+        elif opcion == 3:
+            nombre = pedir_texto("Nombre: ")
+            email = pedir_texto("Email: ")
+            telefono = pedir_texto("Telefono (opcional): ")
+            nuevo = agregar_cliente(db, nombre, email, telefono or None)
+            if nuevo:
+                print("Cliente agregado con ID", nuevo[0])
+        elif opcion == 4:
+            cliente_id = pedir_entero("ID del cliente: ")
+            print("Que dato queres cambiar? 1) Nombre  2) Telefono  3) Email")
+            dato = pedir_entero("Opcion: ")
+            valor = pedir_texto("Nuevo valor: ")
+            actualizar_cliente(db, cliente_id, valor, dato)
+        elif opcion == 5:
+            eliminar_cliente(db, pedir_entero("ID del cliente: "))
+        elif opcion == 0:
+            return
+        else:
+            print("Opcion invalida.")
+
+
+# ---------------------------------------------------------------------------
 # Programa principal
 # ---------------------------------------------------------------------------
 def main():
@@ -167,6 +220,7 @@ def main():
             print("\n=== SISTEMA DE GESTION ===")
             print("1) Productos")
             print("2) Proveedores")
+            print("3) Clientes")
             print("0) Salir")
             opcion = pedir_entero("Opcion: ")
 
@@ -174,6 +228,8 @@ def main():
                 menu_productos(mi_db)
             elif opcion == 2:
                 menu_proveedores(mi_db)
+            elif opcion == 3:
+                menu_clientes(mi_db)
             elif opcion == 0:
                 print("Hasta luego.")
                 break

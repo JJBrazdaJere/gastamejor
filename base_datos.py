@@ -16,6 +16,10 @@ def leer_db(db, sql,variable = None):
         cursor.close()
 
 def commit_db(db, sql,variable = None, devuelve= False):
+    # Devuelve:
+    #   None  -> ocurrio un error (el detalle ya se imprime aca)
+    #   int   -> cantidad de filas afectadas (UPDATE / DELETE)
+    #   tupla -> fila devuelta por "RETURNING" (INSERT ... RETURNING id)
     cursor = db.cursor()
     try:
         if variable != None:
@@ -41,4 +45,16 @@ def commit_db(db, sql,variable = None, devuelve= False):
         print(e)
     finally:
         cursor.close()
+
+def estado_operacion(resultado):
+    # Traduce el valor que devuelve commit_db a un estado legible,
+    # para no confundir un ERROR con un registro "no encontrado".
+    #   'error'         -> None  (ya se informo el detalle en consola)
+    #   'no_encontrado' -> 0 filas afectadas
+    #   'ok'            -> se afectaron filas (o vino una tupla de RETURNING)
+    if resultado is None:
+        return 'error'
+    if resultado == 0:
+        return 'no_encontrado'
+    return 'ok'
  
