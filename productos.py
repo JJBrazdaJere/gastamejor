@@ -11,6 +11,17 @@ def mostrar_producto(db, num):
     else:
         print('Producto no Encontrado')
 
+def obtener_productos(db):
+    return leer_db(db,"SELECT id, nombre, categoria, precio, stock, proveedor_id FROM productos ORDER BY id")
+
+def mostrar_productos(db):
+    productos = obtener_productos(db)
+    if productos:
+        for id_prod, nombre, categoria, precio, stock, proveedor_id in productos:
+            print('id',id_prod,'| Nombre:',nombre,'| Categoria:',categoria,'| $',precio,'| Stock:',stock,'| Proveedor:',proveedor_id)
+    else:
+        print('No hay productos cargados.')
+
 def agregar_producto(db, nombre, categoria, precio, stock, proveedor_id):
     valido=0
     if validar_stock (stock):
@@ -31,6 +42,29 @@ def actualizar_stock(db,producto_id, nuevo_stock):
             print('Stock actualizado correctamente')
         else:
             print('Producto no encontrado')
+
+def actualizar_producto(db, producto_id, nuevo_dato, dato):
+    # dato: 1 = nombre, 2 = categoria, 3 = precio
+    if dato == 1:
+        if validar_nombre(nuevo_dato):
+            resultado = commit_db(db,"UPDATE productos SET nombre=%s WHERE id= %s",(nuevo_dato,producto_id))
+            print('Nombre actualizado correctamente' if resultado else 'Producto no encontrado')
+        else:
+            print('Error nombre')
+    elif dato == 2:
+        if validar_categoria(nuevo_dato):
+            resultado = commit_db(db,"UPDATE productos SET categoria=%s WHERE id= %s",(nuevo_dato,producto_id))
+            print('Categoria actualizada correctamente' if resultado else 'Producto no encontrado')
+        else:
+            print('Error categoria')
+    elif dato == 3:
+        if validar_precio(nuevo_dato):
+            resultado = commit_db(db,"UPDATE productos SET precio=%s WHERE id= %s",(nuevo_dato,producto_id))
+            print('Precio actualizado correctamente' if resultado else 'Producto no encontrado')
+        else:
+            print('Error precio')
+    else:
+        print('Las opciones son 1: Nombre 2: Categoria 3: Precio')
 
 def eliminar_producto(db,producto_id):
     resultado = commit_db(db,"DELETE FROM productos WHERE id= %s",(producto_id,))
@@ -53,7 +87,7 @@ def validar_nombre(nombre):
 def validar_precio(precio):
     if precio > 0.0:
         return True
-    print('El precio no puede ser negativo!.')
+    print('El precio debe ser mayor a 0!.')
     return False
 def validar_categoria(categoria):
     categoria_aux = categoria.strip()

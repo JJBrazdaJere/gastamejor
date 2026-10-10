@@ -20,7 +20,7 @@ def mostrar_proveedor(db, num = None):
     else:
         print('Proveedor no Encontrado')
 
-def agregar_proveedor(db, nombre, email, telefono = None):
+def agregar_proveedor(db, nombre, email, telefono):
     valido=0
     if validar_email (email):
         valido +=1
@@ -30,7 +30,11 @@ def agregar_proveedor(db, nombre, email, telefono = None):
         valido+=1
     else:
         print('Error nombre')
-    if valido == 2:
+    if telefono:
+        valido +=1
+    else:
+        print('El telefono es obligatorio (la base lo exige NOT NULL).')
+    if valido == 3:
         return commit_db(db,("INSERT INTO proveedores (nombre, telefono, email) VALUES (%s, %s, %s) RETURNING id;"),(nombre, telefono, email), True)#true para el returning ID
 
 def actualizar_proveedor(db,proveedor_id,nuevo_dato,dato):
@@ -69,7 +73,9 @@ def eliminar_proveedor(db,proveedor_id):
         print('Proveedor no encontrado')
      
 def validar_email(email):
-    return formato.match(email)
+    if not email:
+        return False
+    return bool(formato.match(email))
     
 def validar_nombre(nombre):
     nombre_aux = nombre.strip()

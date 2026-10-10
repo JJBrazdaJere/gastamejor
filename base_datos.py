@@ -22,17 +22,19 @@ def commit_db(db, sql,variable = None, devuelve= False):
             cursor.execute(sql, variable)
         else:
             cursor.execute(sql)
-            
+
+        # Leemos el resultado ANTES de confirmar. Es necesario para los INSERT
+        # con "RETURNING id": si se confirma primero, el resultado puede perderse.
+        resultado = cursor.fetchone() if devuelve else cursor.rowcount
+
         db.commit()
-        if devuelve:
-            return cursor.fetchone()
-        return cursor.rowcount
+        return resultado
     except psycopg.errors.ForeignKeyViolation:
         db.rollback()
-        print("Error FK ")
+        print("Error: el registro relacionado no existe (clave foranea). ")
     except psycopg.errors.UniqueViolation:
         db.rollback()
-        print("Error Unique")
+        print("Error: ya existe un registro con ese valor unico (por ej. email duplicado). ")
     except psycopg.Error as e:
         db.rollback()
         print("ocurrio un error en la base de datos. ")
