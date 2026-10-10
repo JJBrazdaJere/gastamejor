@@ -136,10 +136,16 @@ Qué podés hacer:
 - Ver (solo lectura) los **reportes**: `reporte_stock`, `stock_bajo` y
   `reporte_ventas`.
 
-> El admin **no** aplica las reglas de negocio (descontar stock, validar stock
-> suficiente): esas reglas viven en el CLI (`ventas.py`). Por eso registrar una
-> venta desde el admin **no** descuenta stock. Para operar con las reglas, usá
-> el menú del CLI.
+> El admin **sí** aplica las reglas de negocio al registrar y anular ventas:
+> valida que haya stock suficiente, exige al menos un producto, congela el
+> **precio del momento** y descuenta/repone stock de forma **atómica**. Las
+> líneas de una venta ya registrada quedan de **solo lectura** (cambiarlas
+> obligaría a reajustar el stock). El CLI (`ventas.py`) implementa las mismas
+> reglas con SQL crudo sobre la misma base.
+>
+> Diferencia menor: el CLI **suma** automáticamente un producto repetido en la
+> carga; el admin, al ser un formulario, pide **no repetir** el producto (borrá
+> la línea sobrante y sumá la cantidad).
 
 Las tablas internas de Django (`django_*`, `auth_*`, `sessions`) sí se crean
 con `migrate`; son las únicas que Django administra.

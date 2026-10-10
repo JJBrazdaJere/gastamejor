@@ -100,7 +100,9 @@ class Venta(models.Model):
 
 class DetalleVenta(models.Model):
     pk = models.CompositePrimaryKey("venta_id", "producto_id")
-    venta = models.ForeignKey(Venta, on_delete=models.PROTECT)
+    # Al anular una venta se borran primero sus lineas y despues la cabecera
+    # (la FK real es NO ACTION). CASCADE reproduce ese orden en el ORM.
+    venta = models.ForeignKey(Venta, on_delete=models.CASCADE)
     producto = models.ForeignKey(Producto, on_delete=models.PROTECT)
     cantidad = models.IntegerField()
     precio_unitario = models.DecimalField(max_digits=12, decimal_places=2)
