@@ -9,6 +9,11 @@ __pycache__/
 venv/
 .pytest_cache/
 
+# --- Respaldos y Django ---
+backups/
+*.sql
+sitio/db.sqlite3
+
 # --- Editores / Sistema ---
 .vscode/
 .idea/
