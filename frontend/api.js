@@ -76,7 +76,9 @@ async function apiPedir(metodo, ruta, cuerpo) {
     respuesta = await fetch(apiBase() + ruta, opciones);
   } catch (_) {
     const error = new Error(
-      "No se pudo conectar con el servidor. Verificá que el backend esté encendido."
+      "No se pudo conectar con el servidor (¿está encendido el backend?). " +
+        "En local: arrancá `python servidor.py` y abrí http://127.0.0.1:8000/cuenta.html. " +
+        "Si el backend está publicado en otra dirección, pegala en «Servidor (avanzado)»."
     );
     error.conexion = true;
     throw error;
@@ -93,13 +95,43 @@ async function apiPedir(metodo, ruta, cuerpo) {
   }
 
   if (!respuesta.ok) {
-    const mensaje =
-      datos && datos.error ? datos.error : "Error " + respuesta.status + " del servidor.";
-    const error = new Error(mensaje);
+    const error = new Error(mensajeDeRespuesta(respuesta.status, datos));
     error.status = respuesta.status;
+    error.sinBackend = esRespuestaSinBackend(respuesta.status, datos);
     throw error;
   }
   return datos;
+}
+
+/* El backend de GastaMejor siempre contesta JSON. Si un 404/405/501 llega con
+   un cuerpo que no es JSON, casi seguro que la dirección no es la API, sino un
+   servidor de archivos estáticos (`python -m http.server`) o GitHub Pages. */
+function esRespuestaSinBackend(status, datos) {
+  return (status === 404 || status === 405 || status === 501) && !datos;
+}
+
+function mensajeDeRespuesta(status, datos) {
+  if (datos && datos.error) return datos.error;
+
+  if (status === 501) {
+    return (
+      "Esta dirección es un servidor de archivos, no el backend de GastaMejor (error 501). " +
+      "En local: cortá ese servidor y arrancá `python servidor.py`; después abrí " +
+      "http://127.0.0.1:8000/cuenta.html. Si el backend está en otra dirección, " +
+      "pegala en «Servidor (avanzado)»."
+    );
+  }
+  if (status === 404 || status === 405) {
+    return (
+      "No se encontró la API de GastaMejor en " +
+      (apiBase() || "esta dirección") +
+      " (error " +
+      status +
+      "). Para usar cuentas hace falta el backend (servidor.py). " +
+      "Si está publicado en otra dirección, pegala en «Servidor (avanzado)»."
+    );
+  }
+  return "Error " + status + " del servidor.";
 }
 
 /* ---------- Endpoints ---------- */

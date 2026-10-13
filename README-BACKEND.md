@@ -130,6 +130,20 @@ Además de la API, sirve los archivos de `frontend/`, así que abriendo
 `http://127.0.0.1:8000/cuenta.html` se prueba todo local en un solo servidor
 (el frontend usa por defecto la misma dirección).
 
+> ⚠️ **No lo reemplaces por `python -m http.server`.** Un servidor de archivos
+> sirve solo el frontend estático: no entiende `/api`, así que un
+> `POST /api/...` responde `501`/`404` y las cuentas no funcionan. Para la API
+> usá `servidor.py`.
+>
+> ⚠️ **Un solo servidor por puerto.** `servidor.py` y `python -m http.server`
+> usan el **8000** por defecto: no pueden correr juntos. Cortá uno (`Ctrl+C`) o
+> cambiá el puerto con `python servidor.py --puerto 8080`.
+
+Además de `GET`, `POST`, `PATCH` y `DELETE`, el servidor responde `HEAD` (como
+`GET`, sin cuerpo). Cualquier otro verbo (`PUT`, `TRACE`, …) y los `POST` sobre
+archivos estáticos devuelven **`405` en JSON** con la cabecera `Allow`, en vez
+del `501` en HTML que da `http.server` por defecto.
+
 | Método | Ruta | Qué hace |
 |---|---|---|
 | GET | `/api/salud` | Estado del servidor y la base |
@@ -233,6 +247,10 @@ Si ya hay una transacción en curso, usa un **SAVEPOINT** automáticamente.
   para no dar pistas a quien intenta adivinar.
 - **CORS configurable** (`API_ORIGENES`) y **servido de archivos estáticos** con
   control de rutas (evita salir de `frontend/`).
+- **Método no permitido = `405` JSON**: los verbos sin manejador (`PUT`, `TRACE`,
+  …) y los `POST` sobre archivos estáticos responden `405` con la cabecera
+  `Allow`, en lugar del `501` en HTML de `http.server`. Mensajes claros para
+  distinguir «el backend no está» de un error real de la API.
 
 ## Nota sobre los `id`
 

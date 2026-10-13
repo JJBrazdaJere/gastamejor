@@ -174,6 +174,28 @@ async function iniciar() {
     }
   }
   mostrarVista("auth");
+  comprobarBackend();
+}
+
+/* Avisa (con contexto) si la dirección actual no responde como la API de
+   GastaMejor; por ejemplo, si es un servidor de archivos estáticos o Pages. */
+async function comprobarBackend() {
+  const aviso = $("#aviso-backend");
+  if (!aviso) return;
+  try {
+    await API.salud();
+    aviso.hidden = true;
+    aviso.textContent = "";
+  } catch (error) {
+    // Solo ofrecemos el modo invitado cuando el backend no está (no ante un
+    // error puntual de la API con un backend que sí responde).
+    const extra =
+      error.sinBackend || error.conexion
+        ? " Mientras tanto podés usar la app como invitado."
+        : "";
+    aviso.textContent = error.message + extra;
+    aviso.hidden = false;
+  }
 }
 
 async function cargarPanel() {
@@ -464,6 +486,7 @@ async function guardarUrl() {
   } catch (error) {
     estado.textContent = "❌ " + error.message;
   }
+  comprobarBackend();
 }
 
 /* ---------- Eventos ---------- */

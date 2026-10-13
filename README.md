@@ -68,6 +68,11 @@ Se publica automáticamente con **GitHub Pages** en cada push a `main`
 Abrí `frontend/index.html` en el navegador (o servilo con
 `python -m http.server` desde la carpeta `frontend`).
 
+> ⚠️ **`python -m http.server` sirve solo archivos estáticos.** Con él la app
+> funciona en **modo invitado** y se abren `pruebas.html`/`tutorial.html`, pero
+> **no** hay cuentas ni ingresos diarios: cualquier `POST /api/...` responde
+> **`501`** (o `404`). Para las cuentas usá **`python servidor.py`** (ver abajo).
+
 - Pruebas en el navegador: `frontend/pruebas.html`
 - Pruebas headless (Windows + Edge): `frontend/tests/correr-tests.ps1`
 
@@ -84,6 +89,17 @@ Abrí `frontend/index.html` en el navegador (o servilo con
 
 > Las cuentas y los ingresos diarios necesitan el backend encendido. Sin él, la
 > app sigue funcionando igual en **modo invitado** (todo local en el navegador).
+
+#### 🛠️ Solución de problemas
+
+- **«Error 501» o «no se encontró la API» al crear una cuenta.** Estás sobre un
+  servidor de archivos estáticos (`python -m http.server`) o GitHub Pages, que no
+  entienden `/api`. Cortá ese servidor y arrancá `python servidor.py`; después
+  abrí `http://127.0.0.1:8000/cuenta.html`. Si publicaste el backend en otro
+  lado, pegá su URL en la página de cuenta, sección **«Servidor (avanzado)»**.
+- **Un solo servidor por puerto.** `python -m http.server` y `python servidor.py`
+  usan el **8000** por defecto: no pueden correr a la vez. Cortá uno (`Ctrl+C`) o
+  arrancá el otro en otro puerto, por ejemplo `python servidor.py --puerto 8080`.
 
 ## 🧰 Tecnologías
 

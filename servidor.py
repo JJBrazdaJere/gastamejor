@@ -95,7 +95,7 @@ class Manejador(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
-    def _responder(self, codigo, cuerpo=None, tipo="application/json; charset=utf-8"):
+    def _responder(self, codigo, cuerpo=None, tipo="application/json; charset=utf-8", cabeceras_extra=None):
         datos = b""
         if cuerpo is not None:
             if isinstance(cuerpo, (dict, list)):
@@ -108,9 +108,33 @@ class Manejador(BaseHTTPRequestHandler):
         self.send_header("Content-Type", tipo)
         self.send_header("Content-Length", str(len(datos)))
         self._cors()
+        for clave, valor in (cabeceras_extra or {}).items():
+            self.send_header(clave, valor)
         self.end_headers()
         if datos and self.command != "HEAD":
             self.wfile.write(datos)
+
+    def _metodo_no_permitido(self, permitidos=None):
+        """405 en JSON (no el 501 en HTML que trae http.server por defecto)."""
+        self._responder(
+            405,
+            {
+                "error": (
+                    "El metodo {} no esta permitido en esta direccion. "
+                    "Si buscabas la API de GastaMejor, asegurate de estar usando "
+                    "servidor.py y no un servidor de archivos estaticos."
+                ).format(self.command)
+            },
+            cabeceras_extra={"Allow": permitidos or "GET, HEAD, POST, PATCH, DELETE, OPTIONS"},
+        )
+
+    # http.server responde 501 (HTML) cuando no existe un do_<VERBO>. Derivamos
+    # cualquier verbo sin manejador a un 405 JSON, que es mas claro para el
+    # frontend y para quien prueba la API a mano.
+    def __getattr__(self, nombre):
+        if nombre.startswith("do_"):
+            return self._metodo_no_permitido
+        raise AttributeError(nombre)
 
     def _json(self, codigo, cuerpo):
         self._responder(codigo, cuerpo)
@@ -148,6 +172,10 @@ class Manejador(BaseHTTPRequestHandler):
     def do_GET(self):
         self._despachar("GET")
 
+    def do_HEAD(self):
+        # Igual que GET pero sin cuerpo (para monitoreo / comprobaciones).
+        self._despachar("HEAD")
+
     def do_POST(self):
         self._despachar("POST")
 
@@ -163,9 +191,13 @@ class Manejador(BaseHTTPRequestHandler):
         consulta = parse_qs(urlparse(self.path).query)
         try:
             if ruta == "/api" or ruta.startswith("/api/"):
-                self._api(metodo, ruta, consulta)
-            else:
+                # HEAD responde como GET (solo cabeceras).
+                self._api("GET" if metodo == "HEAD" else metodo, ruta, consulta)
+            elif metodo in ("GET", "HEAD"):
                 self._estatico(ruta)
+            else:
+                # Un POST/PUT/... sobre un archivo estatico no tiene sentido.
+                self._metodo_no_permitido("GET, HEAD")
         except ErrorValidacion as error:
             self._error(400, str(error))
         except ErrorNoEncontrado as error:
