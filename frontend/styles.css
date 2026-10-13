@@ -218,6 +218,15 @@ body {
   padding: 0 18px;
 }
 
+/* Botonera "Ajustar Gastos Actuales" / "Corregir Monto" (entre el gráfico y las
+   categorías): en pantallas angostas se apila para que se lea el texto largo. */
+@media (max-width: 560px) {
+  .acciones-ajuste { grid-template-columns: 1fr; }
+}
+
+/* Cuando queda un solo botón (📅 Guardar este mes), ocupa todo el ancho. */
+.acciones-guardar { grid-template-columns: 1fr; }
+
 /* ---------- Resultado ---------- */
 .tarjeta-resumen { margin-bottom: var(--espacio); }
 
@@ -538,6 +547,16 @@ body {
   align-items: center;
 }
 
+/* Hasta 899px (layout de una columna, más angosto) la casilla del monto pasa a
+   su propia fila para que se vea el número completo (ej. 1.000.000,00), y el
+   selector de grupo sube junto al de % / $. */
+@media (max-width: 899px) {
+  .ajuste-fila-controles { grid-template-columns: auto 1fr; }
+  .ajuste-fila-controles .modo-picker { grid-column: 1; grid-row: 1; }
+  .ajuste-fila-controles .ajuste-grupo { grid-column: 2; grid-row: 1; }
+  .ajuste-fila-controles .campo-pct { grid-column: 1 / -1; grid-row: 2; }
+}
+
 /* Interruptor % / $ */
 .modo-picker {
   display: flex;
@@ -564,7 +583,7 @@ body {
   color: #ffffff;
 }
 
-.campo-pct { display: flex; align-items: center; gap: 6px; }
+.campo-pct { display: flex; align-items: center; gap: 6px; min-width: 0; }
 
 .ajuste-pct {
   width: 100%;
@@ -577,6 +596,7 @@ body {
   padding: 10px 8px;
   min-height: 44px;
   text-align: right;
+  font-variant-numeric: tabular-nums;
   outline: none;
 }
 
@@ -827,8 +847,8 @@ body:has(.modal:not([hidden])) .btn-reportar { display: none; }
   margin-bottom: 8px;
 }
 
-.tour-titulo { font-size: 18px; margin: 0 0 6px; }
-.tour-texto { margin: 0 0 12px; font-size: 15px; }
+.tour-titulo { font-size: 20px; margin: 0 0 6px; }
+.tour-texto { margin: 0 0 12px; font-size: 16px; line-height: 1.5; }
 
 .tour-acciones {
   display: flex;

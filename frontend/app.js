@@ -2288,29 +2288,19 @@ function iniciarEventos() {
 
 const PASOS_TOUR = [
   {
-    sel: "#monto", tab: "reparto", pantalla: "ingreso",
-    titulo: "Escribí tu dinero del mes",
-    texto: "Poné cuánto vas a tener este mes. La app calcula cuánto destinar a cada gasto y lo escribe con formato 1.000.000,00.",
+    sel: '[data-pantalla="ingreso"] .tarjeta', tab: "reparto", pantalla: "ingreso",
+    titulo: "Escribí tu dinero y repartilo",
+    texto: "Poné cuánto tenés este mes, elegí la moneda y tocá «Distribuir mi dinero». La app reparte el total entre tus gastos.",
   },
   {
-    sel: "#moneda", tab: "reparto", pantalla: "ingreso",
-    titulo: "Elegí la moneda",
-    texto: "Por defecto pesos argentinos (ARS). Cambiala si cobrás en otra moneda: todos los montos se muestran en esa moneda.",
-  },
-  {
-    sel: "#btn-distribuir", tab: "reparto", pantalla: "ingreso",
-    titulo: "Distribuí tu dinero",
-    texto: "Un toque y ves tu reparto en un gráfico de torta con subtotales por grupo: necesidades, deseos y ahorro.",
-  },
-  {
-    sel: "#perfiles", tab: "perfil",
-    titulo: "Perfiles de reparto",
-    texto: "Atajos de un toque (Gastador, Equilibrado, Conservador, Cauto) que reparten tus porcentajes por grupo. Los montos fijos no se tocan.",
+    sel: '.tabbar-btn[data-tab="perfil"]', selAlt: "#perfiles", tab: "perfil",
+    titulo: "Sección «Perfil y plan»",
+    texto: "Con este botón de abajo entrás a tus perfiles, tu plan y el consejero. Tocá un perfil y tus porcentajes se reparten solos.",
   },
   {
     sel: "#plan-timeline", tab: "perfil",
     titulo: "Plan de evolución",
-    texto: "Te acerca de a poco al ideal 50/30/20: elegís en cuántos meses y avanzás paso a paso, viendo cuánto cambia cada categoría.",
+    texto: "Te acerca de a poco al ideal 50/30/20: elegís en cuántos meses y avanzás paso a paso.",
   },
   {
     sel: "#consejero", tab: "perfil",
@@ -2318,9 +2308,9 @@ const PASOS_TOUR = [
     texto: "Te dice dónde recortar para llegar a tu objetivo, con consejos concretos y el monto sugerido.",
   },
   {
-    sel: "#hist-calendario", tab: "historial",
-    titulo: "Tu historial",
-    texto: "Guardá cada mes desde el resultado y mirá tu evolución y tu ahorro en el calendario.",
+    sel: '.tabbar-btn[data-tab="historial"]', selAlt: "#hist-calendario", tab: "historial",
+    titulo: "Sección «Historial»",
+    texto: "Con este botón de abajo ves los meses que guardaste y cómo evoluciona tu ahorro.",
   },
   {
     sel: "#btn-reportar",
@@ -2369,6 +2359,26 @@ function pasoAnterior() {
   mostrarPasoTour(tourIndice - 1);
 }
 
+/* Elemento que tiene que resaltar el paso. Algunos pasos apuntan a la barra
+   inferior, que en pantallas grandes está oculta: en ese caso usamos `selAlt`
+   (la sección real) para no resaltar un punto vacío. */
+function esVisible(el) {
+  if (!el) return false;
+  const r = el.getBoundingClientRect();
+  return r.width > 0 && r.height > 0;
+}
+
+function elementoDePaso(paso) {
+  if (!paso) return null;
+  const principal = document.querySelector(paso.sel);
+  if (principal && esVisible(principal)) return principal;
+  if (paso.selAlt) {
+    const alt = document.querySelector(paso.selAlt);
+    if (alt && esVisible(alt)) return alt;
+  }
+  return principal;
+}
+
 function mostrarPasoTour(i) {
   if (i < 0 || i >= tourPasos.length) { finalizarTour(); return; }
   tourIndice = i;
@@ -2377,7 +2387,7 @@ function mostrarPasoTour(i) {
   if (paso.tab) mostrarPestana(paso.tab);
   if (paso.pantalla) mostrarPantalla(paso.pantalla);
 
-  const el = document.querySelector(paso.sel);
+  const el = elementoDePaso(paso);
   if (!el) { pasoSiguiente(); return; }
 
   $("#tour-paso").textContent = (i + 1) + " de " + tourPasos.length;
@@ -2401,7 +2411,7 @@ function mostrarPasoTour(i) {
 function actualizarFocoTour() {
   const paso = tourPasos[tourIndice];
   if (!paso) return;
-  const el = document.querySelector(paso.sel);
+  const el = elementoDePaso(paso);
   const foco = $("#tour-foco");
   const globo = $("#tour-globo");
   if (!el || !foco || !globo || $("#tour").hidden) return;

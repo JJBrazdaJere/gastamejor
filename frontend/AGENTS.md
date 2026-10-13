@@ -77,8 +77,11 @@ eficiente y optimizar en que se gasta.
     historial** y sin haberlo visto, arranca un tour estilo juego: oscurece el
     fondo, **resalta** un elemento (spotlight) y muestra un **globo** con el
     "para que sirve / que utilidad le podes dar" y botones **Saltar / Anterior /
-    Siguiente** (el ultimo: **Listo**). Recorre **8 pasos** (monto, moneda,
-    distribuir, perfiles, plan, consejero, historial y reportar); en el celular
+    Siguiente** (el ultimo: **Listo**). Recorre **6 pasos** (escribir y repartir,
+    la seccion **Perfil y plan** de la barra inferior, el plan, el consejero, la
+    seccion **Historial** y reportar); los pasos de la barra inferior usan
+    `selAlt` hacia su seccion para resaltar algo visible cuando la barra esta
+    oculta en pantallas grandes; en el celular
     **cambia de pestana** solo para mostrar cada panel; se navega tambien con las
     flechas y Esc y **bloquea el fondo**. Se marca como visto al terminar, al
     saltar o al guardar el primer mes (clave `gastamejor.tour.v1`), asi **no se

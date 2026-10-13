@@ -186,8 +186,9 @@ escrito *"Encontre un problema en GastaMejor: "* para que completes qué pasó.
 La **primera vez** que abrís la app (cuando todavía **no guardaste ningún mes**)
 arranca un **tutorial guiado** estilo juego: oscurece el fondo, **resalta un
 botón** y muestra un **globo** con para qué sirve y qué utilidad le podés sacar.
-Recorre **8 pasos**: dinero del mes, moneda, distribuir, perfiles, plan de
-evolución, consejero, historial y el botón de reportar.
+Recorre **6 pasos**: escribir y repartir el dinero, la sección **Perfil y plan**
+de la barra de abajo, el plan de evolución, el consejero, la sección **Historial**
+y el botón de reportar.
 
 - Se navega con **Siguiente / Anterior**, o **Saltar**; también con las flechas
   **← →** y **Esc**.
