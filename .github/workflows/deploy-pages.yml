@@ -1,0 +1,40 @@
+name: Publicar en GitHub Pages
+
+# Se dispara al subir cambios a main (o a mano desde la pestana Actions).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Permisos que necesita el deploy de Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Evita despliegues solapados.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Traer el repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Pages
+        uses: actions/configure-pages@v5
+
+      - name: Empaquetar la carpeta frontend
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend
+
+      - name: Desplegar
+        id: deployment
+        uses: actions/deploy-pages@v4
