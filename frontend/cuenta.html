@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>GastaMejor — Mis ingresos diarios</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="pagina-cuenta">
+  <div class="contenedor">
+
+    <header class="encabezado">
+      <a class="btn-atras" href="index.html" aria-label="Volver a la app">←</a>
+      <h1 class="logo"><img src="logo.png" alt="Logo de GastaMejor" class="logo-imagen">GastaMejor</h1>
+    </header>
+
+    <main>
+      <p class="sub-lema">Si cobrás por día, cargá lo que ganás cada jornada y mirá cuánto suma tu mes.</p>
+
+      <!-- Estado: cargando -->
+      <section id="vista-cargando" class="pantalla" hidden>
+        <div class="tarjeta"><p class="nota">Cargando…</p></div>
+      </section>
+
+      <!-- Estado: sin sesión (login / registro / verificar) -->
+      <section id="vista-auth" class="pantalla" hidden>
+        <div class="tarjeta">
+          <div class="subtabs">
+            <button id="tab-login" class="subtab activo" type="button">Iniciar sesión</button>
+            <button id="tab-registro" class="subtab" type="button">Crear cuenta</button>
+          </div>
+
+          <div id="panel-login">
+            <label class="etiqueta" for="login-usuario">Usuario o email</label>
+            <input id="login-usuario" class="campo-texto" type="text" autocomplete="username" autocapitalize="none">
+            <label class="etiqueta" for="login-password">Contraseña</label>
+            <input id="login-password" class="campo-texto" type="password" autocomplete="current-password">
+            <button id="btn-login" class="btn-primario btn-ancho" type="button">Entrar</button>
+          </div>
+
+          <div id="panel-registro" hidden>
+            <label class="etiqueta" for="reg-nombre">Nombre</label>
+            <input id="reg-nombre" class="campo-texto" type="text" autocomplete="name">
+            <label class="etiqueta" for="reg-usuario">Usuario</label>
+            <input id="reg-usuario" class="campo-texto" type="text" autocomplete="username" autocapitalize="none" placeholder="3 a 30 caracteres">
+            <label class="etiqueta" for="reg-email">Email</label>
+            <input id="reg-email" class="campo-texto" type="email" autocomplete="email" autocapitalize="none">
+            <label class="etiqueta" for="reg-telefono">Teléfono (opcional)</label>
+            <input id="reg-telefono" class="campo-texto" type="text" autocomplete="tel">
+            <label class="etiqueta" for="reg-password">Contraseña</label>
+            <input id="reg-password" class="campo-texto" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres">
+            <button id="btn-registro" class="btn-primario btn-ancho" type="button">Crear cuenta</button>
+          </div>
+
+          <div id="panel-verificar" hidden>
+            <p class="nota">Te enviamos un código a <strong id="verif-email"></strong>. Escribilo acá para activar tu cuenta.</p>
+            <label class="etiqueta" for="verif-codigo">Código de verificación</label>
+            <input id="verif-codigo" class="campo-texto" type="text" inputmode="numeric" autocomplete="one-time-code">
+            <button id="btn-verificar" class="btn-primario btn-ancho" type="button">Verificar</button>
+            <button id="btn-reenviar" class="btn-secundario btn-ancho" type="button">Reenviar código</button>
+            <p id="aviso-test" class="aviso-ok" hidden></p>
+          </div>
+
+          <p id="error-auth" class="error" hidden></p>
+          <p class="nota">¿No querés cuenta? <a class="enlace-volver" href="index.html">Seguí como invitado</a> y usá la app igual.</p>
+        </div>
+
+        <div class="tarjeta">
+          <details>
+            <summary>Servidor (avanzado)</summary>
+            <p class="nota">Dirección del backend. Déjalo vacío si el sitio ya lo sirve (uso local). Si lo publicás aparte, pegá la URL acá.</p>
+            <div class="campo-linea">
+              <input id="api-url" class="campo-texto" type="text" placeholder="https://mi-backend.ejemplo.com" autocapitalize="none">
+              <button id="btn-api-url" class="btn-secundario" type="button">Guardar</button>
+            </div>
+            <p id="api-estado" class="nota"></p>
+          </details>
+        </div>
+      </section>
+
+      <!-- Estado: con sesión (panel de ingresos) -->
+      <section id="vista-panel" class="pantalla" hidden>
+        <div class="tarjeta">
+          <div class="sesion-caja">
+            <div>
+              <strong id="saludo">Hola</strong>
+              <div class="nota" id="saludo-email"></div>
+            </div>
+            <button id="btn-logout" class="btn-secundario btn-chico" type="button">Salir</button>
+          </div>
+        </div>
+
+        <div class="tarjeta">
+          <h2 class="titulo-seccion">💵 Cargar un ingreso</h2>
+          <p class="nota">Anotá lo que ganaste hoy. Cada carga se suma al mes elegido abajo.</p>
+          <div class="campo-linea">
+            <div>
+              <label class="etiqueta" for="ing-fecha">Fecha</label>
+              <input id="ing-fecha" class="campo-texto" type="date">
+            </div>
+            <div>
+              <label class="etiqueta" for="ing-monto">Monto</label>
+              <input id="ing-monto" class="campo-texto" type="text" inputmode="decimal" placeholder="0,00">
+            </div>
+          </div>
+          <label class="etiqueta" for="ing-desc">Descripción (opcional)</label>
+          <input id="ing-desc" class="campo-texto" type="text" placeholder="Ej: changa, venta, sueldo…">
+          <button id="btn-agregar-ingreso" class="btn-primario btn-ancho" type="button">Agregar ingreso</button>
+          <p id="error-ingreso" class="error" hidden></p>
+        </div>
+
+        <div class="tarjeta">
+          <h2 class="titulo-seccion">📅 Resumen del mes</h2>
+          <label class="etiqueta" for="mes">Mes</label>
+          <input id="mes" class="campo-texto" type="month">
+          <div class="resumen-mes"><span>Ingresos diarios</span><strong id="res-diario">—</strong></div>
+          <div class="resumen-mes"><span>Ingreso fijo mensual</span><strong id="res-fijo">—</strong></div>
+          <div class="resumen-mes resumen-total"><span>Total del mes</span><strong id="res-total">—</strong></div>
+          <button id="btn-usar" class="btn-primario btn-ancho" type="button">Usar este total en el reparto</button>
+        </div>
+
+        <div class="tarjeta">
+          <h2 class="titulo-seccion">Detalle del mes</h2>
+          <ul id="lista-ingresos" class="lista-ingresos"></ul>
+          <p id="sin-ingresos" class="vacio">Todavía no cargaste ingresos este mes.</p>
+        </div>
+
+        <div class="tarjeta">
+          <h2 class="titulo-seccion">⚙️ Tu cuenta</h2>
+          <p class="nota">El ingreso fijo se suma al total de todos los meses (por ejemplo, un sueldo o un alquiler que cobrás aparte).</p>
+          <label class="etiqueta" for="perfil-fijo">Ingreso fijo mensual (opcional)</label>
+          <input id="perfil-fijo" class="campo-texto" type="text" inputmode="decimal" placeholder="0,00">
+          <label class="etiqueta" for="perfil-moneda">Moneda</label>
+          <select id="perfil-moneda" class="select"></select>
+          <label class="etiqueta" for="perfil-telefono">Teléfono (opcional)</label>
+          <input id="perfil-telefono" class="campo-texto" type="text" autocomplete="tel">
+          <button id="btn-guardar-perfil" class="btn-secundario btn-ancho" type="button">Guardar cambios</button>
+          <p id="ok-perfil" class="aviso-ok" hidden></p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="pie">
+      <a class="pie-enlace" href="index.html">Volver a la app</a>
+      <span class="pie-punto">·</span>
+      <span>GastaMejor — ingresos diarios</span>
+    </footer>
+  </div>
+
+  <!-- Boton flotante: reportar un problema por WhatsApp -->
+  <a id="btn-reportar" class="btn-reportar"
+     href="https://wa.me/5492920553198?text=Encontre%20un%20problema%20en%20GastaMejor%3A%20"
+     target="_blank" rel="noopener noreferrer"
+     aria-label="Reportar un problema por WhatsApp">
+    <span class="btn-reportar-ico" aria-hidden="true">🐞</span>
+    <span class="btn-reportar-txt">Reportar</span>
+  </a>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <script src="storage.js"></script>
+  <script src="api.js"></script>
+  <script src="cuenta.js"></script>
+</body>
+</html>

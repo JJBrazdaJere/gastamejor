@@ -1,0 +1,124 @@
+"use strict";
+
+/* ============================================================
+   GastaMejor — Cliente de la API (api.js)
+   Habla con el backend (servidor.py) para cuentas e ingresos diarios.
+   Si no hay backend configurado, la app sigue funcionando en modo
+   invitado (todo local en localStorage): solo no habrá cuenta.
+   ============================================================ */
+
+const CLAVE_TOKEN = "gastamejor.token.v1";
+const CLAVE_API_URL = "gastamejor.apiUrl.v1";
+
+/* Dirección del backend. Por defecto vacío = mismo origen (cuando el
+   sitio lo sirve el propio backend, ej. local). En GitHub Pages hay que
+   apuntarla al backend publicado (se configura en la página de cuenta). */
+function apiBase() {
+  if (typeof window !== "undefined" && window.GASTAMEJOR_API) {
+    return String(window.GASTAMEJOR_API).replace(/\/+$/, "");
+  }
+  try {
+    const guardada = localStorage.getItem(CLAVE_API_URL);
+    if (guardada) return String(guardada).replace(/\/+$/, "");
+  } catch (_) {
+    /* sin persistencia */
+  }
+  return "";
+}
+
+function apiGuardarUrl(url) {
+  try {
+    localStorage.setItem(CLAVE_API_URL, String(url || "").replace(/\/+$/, ""));
+  } catch (_) {
+    /* sin persistencia */
+  }
+}
+
+/* ---------- Token de sesión ---------- */
+function apiToken() {
+  try {
+    return localStorage.getItem(CLAVE_TOKEN) || "";
+  } catch (_) {
+    return "";
+  }
+}
+
+function apiGuardarToken(token) {
+  try {
+    localStorage.setItem(CLAVE_TOKEN, token);
+  } catch (_) {
+    /* sin persistencia */
+  }
+}
+
+function apiBorrarToken() {
+  try {
+    localStorage.removeItem(CLAVE_TOKEN);
+  } catch (_) {
+    /* sin persistencia */
+  }
+}
+
+/* ---------- Petición genérica ---------- */
+async function apiPedir(metodo, ruta, cuerpo) {
+  const cabeceras = {};
+  const token = apiToken();
+  if (token) cabeceras["Authorization"] = "Bearer " + token;
+
+  const opciones = { method: metodo, headers: cabeceras };
+  if (cuerpo !== undefined && cuerpo !== null) {
+    cabeceras["Content-Type"] = "application/json";
+    opciones.body = JSON.stringify(cuerpo);
+  }
+
+  let respuesta;
+  try {
+    respuesta = await fetch(apiBase() + ruta, opciones);
+  } catch (_) {
+    const error = new Error(
+      "No se pudo conectar con el servidor. Verificá que el backend esté encendido."
+    );
+    error.conexion = true;
+    throw error;
+  }
+
+  let datos = null;
+  const texto = await respuesta.text();
+  if (texto) {
+    try {
+      datos = JSON.parse(texto);
+    } catch (_) {
+      datos = null;
+    }
+  }
+
+  if (!respuesta.ok) {
+    const mensaje =
+      datos && datos.error ? datos.error : "Error " + respuesta.status + " del servidor.";
+    const error = new Error(mensaje);
+    error.status = respuesta.status;
+    throw error;
+  }
+  return datos;
+}
+
+/* ---------- Endpoints ---------- */
+const API = {
+  hayToken: apiToken,
+
+  salud: () => apiPedir("GET", "/api/salud"),
+  registro: (datos) => apiPedir("POST", "/api/registro", datos),
+  verificar: (email, codigo) => apiPedir("POST", "/api/verificar", { email: email, codigo: codigo }),
+  reenviar: (email) => apiPedir("POST", "/api/reenviar", { email: email }),
+  login: (usuario, password) => apiPedir("POST", "/api/login", { usuario: usuario, password: password }),
+  logout: () => apiPedir("POST", "/api/logout", {}),
+  perfil: () => apiPedir("GET", "/api/perfil"),
+  actualizarPerfil: (datos) => apiPedir("PATCH", "/api/perfil", datos),
+  cambiarPassword: (actual, nueva) => apiPedir("POST", "/api/password", { actual: actual, nueva: nueva }),
+  ingresos: (mes) =>
+    apiPedir("GET", "/api/ingresos" + (mes ? "?mes=" + encodeURIComponent(mes) : "")),
+  agregarIngreso: (datos) => apiPedir("POST", "/api/ingresos", datos),
+  eliminarIngreso: (id) => apiPedir("DELETE", "/api/ingresos/" + encodeURIComponent(id)),
+  resumen: (mes) => apiPedir("GET", "/api/resumen?mes=" + encodeURIComponent(mes)),
+  resumenAnual: (anio) => apiPedir("GET", "/api/resumen/anual?anio=" + encodeURIComponent(anio)),
+};

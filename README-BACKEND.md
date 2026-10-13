@@ -55,6 +55,10 @@ $psql = "C:\Program Files\PostgreSQL\18\bin\psql.exe"
 & $psql -h localhost -U postgres -d practica_sql -v ON_ERROR_STOP=1 -f migrations\001_identity_ids.sql
 & $psql -h localhost -U postgres -d practica_sql -v ON_ERROR_STOP=1 -f migrations\002_constraints.sql
 & $psql -h localhost -U postgres -d practica_sql -v ON_ERROR_STOP=1 -f migrations\003_precio_unitario.sql
+& $psql -h localhost -U postgres -d practica_sql -v ON_ERROR_STOP=1 -f migrations\004_clientes_auth.sql
+& $psql -h localhost -U postgres -d practica_sql -v ON_ERROR_STOP=1 -f migrations\005_ingresos.sql
+& $psql -h localhost -U postgres -d practica_sql -v ON_ERROR_STOP=1 -f migrations\006_sesiones.sql
+& $psql -h localhost -U postgres -d practica_sql -v ON_ERROR_STOP=1 -f migrations\007_vista_ingresos_mes.sql
 ```
 
 | Migración | Qué hace |
@@ -62,6 +66,10 @@ $psql = "C:\Program Files\PostgreSQL\18\bin\psql.exe"
 | `001_identity_ids` | Autoincremento `IDENTITY` en `clientes`, `empleados` y `ventas` |
 | `002_constraints` | `CHECK` de cantidad/precio/stock y `DEFAULT CURRENT_DATE` en `ventas.fecha` |
 | `003_precio_unitario` | Agrega `detalle_ventas.precio_unitario` (precio del momento de la venta) |
+| `004_clientes_auth` | Cuenta de usuario: `usuario`, `password_hash`, `email_verificado`, código de verificación, `ingreso_fijo_mensual`, `moneda` |
+| `005_ingresos` | Tabla `ingresos` (ingresos **diarios** por usuario) |
+| `006_sesiones` | Tabla `sesiones` (tokens de login con vencimiento) |
+| `007_vista_ingresos_mes` | Vista `ingresos_mes` (total y cantidad de ingresos por usuario y mes) |
 
 Cada archivo `NOMBRE_rollback.sql` revierte su migración.
 
@@ -91,6 +99,58 @@ Cada entidad tiene su submenú (listar, ver por ID, agregar, actualizar, elimina
 > Los textos se imprimen sin acentos a propósito (compatibilidad con consolas
 > antiguas); la salida se fuerza a UTF-8 para que sí se vean los acentos de los
 > **datos**.
+
+## Cuentas de usuario e ingresos diarios
+
+El proyecto también incluye cuentas de usuario (login con email verificado,
+teléfono opcional) e **ingresos diarios**: cada usuario carga lo que gana cada
+día y el total del mes es la suma de esos ingresos **más** su
+`ingreso_fijo_mensual` (opcional).
+
+- `cuentas.py`: registro, verificación de email, login/sesión, perfil y cambio
+  de contraseña. Usa la tabla `clientes` (ampliada por la migración 004).
+- `ingresos.py`: alta/baja/listado de ingresos diarios y resúmenes por mes/año.
+- `seguridad.py`: **scrypt** con sal aleatoria para las contraseñas, tokens de
+  sesión y códigos de verificación aleatorios.
+- `correo.py`: envío de correos. Por defecto `CORREO_MODO=test`: **no envía**,
+  imprime el código en la consola (ideal para probar). Con `CORREO_MODO=smtp`
+  y datos SMTP en el `.env` envía de verdad.
+
+## API HTTP (`servidor.py`)
+
+El frontend es estático, así que el backend se expone con un servidor HTTP
+JSON (solo biblioteca estándar + psycopg, sin frameworks):
+
+```powershell
+python servidor.py                 # http://127.0.0.1:8000
+python servidor.py --puerto 8080   # otro puerto
+```
+
+Además de la API, sirve los archivos de `frontend/`, así que abriendo
+`http://127.0.0.1:8000/cuenta.html` se prueba todo local en un solo servidor
+(el frontend usa por defecto la misma dirección).
+
+| Método | Ruta | Qué hace |
+|---|---|---|
+| GET | `/api/salud` | Estado del servidor y la base |
+| POST | `/api/registro` | Crea la cuenta y envía el código |
+| POST | `/api/verificar` | Verifica el email con el código |
+| POST | `/api/reenviar` | Reenvía el código de verificación |
+| POST | `/api/login` | Inicia sesión → `token` |
+| POST | `/api/logout` | Cierra la sesión |
+| GET | `/api/perfil` | Datos de la cuenta |
+| PATCH | `/api/perfil` | Actualiza teléfono / ingreso fijo / moneda |
+| POST | `/api/password` | Cambia la contraseña |
+| GET | `/api/ingresos?mes=AAAA-MM` | Lista los ingresos (de un mes o todos) |
+| POST | `/api/ingresos` | Agrega un ingreso diario |
+| DELETE | `/api/ingresos/{id}` | Elimina un ingreso |
+| GET | `/api/resumen?mes=AAAA-MM` | Totales del mes (diarios + fijo) |
+| GET | `/api/resumen/anual?anio=AAAA` | Totales mes a mes del año |
+
+La autenticación usa el encabezado `Authorization: Bearer <token>`.
+
+El dinero viaja como **texto con 2 decimales** (ej. `"3500.50"`), nunca como
+`float`, para no arrastrar errores de redondeo.
 
 ## Tests
 
@@ -128,10 +188,15 @@ La lógica de negocio está separada de la presentación:
 | `productos.py` | Lógica de productos |
 | `proveedores.py` | Lógica de proveedores |
 | `clientes.py` | Lógica de clientes |
+| `cuentas.py` | Cuentas de usuario (registro, verificación, login, perfil) |
+| `ingresos.py` | Ingresos diarios y resúmenes por mes/año |
+| `seguridad.py` | Hash de contraseñas (scrypt), tokens y códigos |
+| `correo.py` | Envío de correos (con modo test) |
 | `empleados.py` | Lógica de empleados |
 | `ventas.py` | Lógica de ventas (cabecera + líneas + stock) |
 | `reportes.py` | Consultas de solo lectura sobre las vistas |
-| `main.py` | Menú / punto de entrada |
+| `main.py` | Menú / punto de entrada de consola |
+| `servidor.py` | API HTTP JSON (y sirve el `frontend/`) |
 | `migrations/` | Cambios de estructura versionados |
 | `tests/` | Pruebas automáticas |
 
@@ -160,6 +225,14 @@ Si ya hay una transacción en curso, usa un **SAVEPOINT** automáticamente.
   de `producto_id`, para no provocar *deadlocks* entre ventas concurrentes.
 - **`%` literal seguro**: una consulta como `LIKE 'a%'` no se confunde con un
   marcador aunque se pase una tupla de parámetros vacía.
+- **Contraseñas con `scrypt` + sal aleatoria**: nunca se guarda la contraseña;
+  la comparación usa `hmac.compare_digest` (tiempo constante).
+- **Tokens de sesión aleatorios** (256 bits) con vencimiento en la base.
+- **Códigos de verificación** con vencimiento y comparación segura.
+- **Mismo mensaje de error** para usuario inexistente y contraseña incorrecta,
+  para no dar pistas a quien intenta adivinar.
+- **CORS configurable** (`API_ORIGENES`) y **servido de archivos estáticos** con
+  control de rutas (evita salir de `frontend/`).
 
 ## Nota sobre los `id`
 

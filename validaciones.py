@@ -75,3 +75,12 @@ def validar_texto_opcional(valor):
     if valor is None or not str(valor).strip():
         return None
     return str(valor).strip()
+
+
+def formatear_monto(valor):
+    """Devuelve un monto como texto con 2 decimales (ej: '3500.50').
+
+    Se usa para responder por la API: asi el dinero nunca viaja como float
+    (que arrastra errores de redondeo) y siempre tiene el mismo formato.
+    """
+    return str(Decimal(str(valor)).quantize(Decimal("0.01")))

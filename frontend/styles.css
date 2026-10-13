@@ -1334,3 +1334,147 @@ body:has(.modal:not([hidden])) .btn-reportar { display: none; }
 .consejo-ahorro { background: #ecfdf5; border-color: transparent; }
 .consejo-ok { background: var(--primario-suave); border-color: transparent; color: var(--primario-oscuro); }
 .consejo-error { background: var(--alerta-suave); border-color: transparent; color: var(--alerta); }
+
+/* ============================================================
+   Pagina de cuenta e ingresos diarios (cuenta.html)
+   ============================================================ */
+
+a.btn-atras {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.pagina-cuenta main { max-width: 640px; margin: 0 auto; }
+.pagina-cuenta .tarjeta { margin-bottom: var(--espacio); }
+
+.pagina-cuenta .etiqueta { margin-top: 12px; }
+
+/* Inputs de texto genericos */
+.campo-texto {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  min-height: var(--tactil);
+  border: 2px solid var(--borde);
+  border-radius: var(--radio-chico);
+  background: var(--fondo);
+  color: var(--texto);
+  font-size: 16px;
+  font-family: inherit;
+  outline: none;
+}
+
+.campo-texto:focus {
+  border-color: var(--primario);
+  background: var(--tarjeta);
+}
+
+/* Pestañas internas (iniciar sesion / crear cuenta) */
+.subtabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.subtab {
+  flex: 1;
+  min-height: var(--tactil);
+  border: 2px solid var(--borde);
+  background: var(--tarjeta);
+  border-radius: var(--radio-chico);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.subtab.activo {
+  background: var(--primario-suave);
+  border-color: var(--primario);
+  color: var(--primario-oscuro);
+}
+
+/* Dos campos en la misma fila (fecha + monto) */
+.campo-linea {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.campo-linea > * { flex: 1 1 130px; min-width: 0; }
+.campo-linea .etiqueta { margin-top: 0; }
+.campo-linea .campo-texto { margin-bottom: 0; }
+
+/* Avisos verdes (exito / modo prueba) */
+.aviso-ok {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radio-chico);
+  background: var(--primario-suave);
+  color: var(--primario-oscuro);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+/* Resumen del mes */
+.resumen-mes {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--borde);
+  font-size: 15px;
+}
+
+.resumen-mes strong { font-variant-numeric: tabular-nums; }
+.resumen-total { border-bottom: none; }
+.resumen-total strong { font-size: 22px; color: var(--primario-oscuro); }
+
+/* Lista de ingresos del mes */
+.lista-ingresos { list-style: none; margin: 12px 0 0; padding: 0; }
+
+.item-ingreso {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--borde);
+}
+
+.item-ingreso:last-child { border-bottom: none; }
+.item-ingreso .datos { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.item-ingreso .fecha { font-size: 12px; color: var(--texto-suave); }
+.item-ingreso .monto { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.btn-borrar {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: var(--alerta-suave);
+  color: var(--alerta);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.btn-borrar:active { transform: scale(0.94); }
+
+.vacio { color: var(--texto-suave); font-size: 14px; margin: 12px 0 0; }
+
+.sesion-caja {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.enlace-volver { color: var(--primario-oscuro); font-weight: 700; text-decoration: none; }
+.enlace-volver:hover { text-decoration: underline; }
+
+#btn-usar:disabled { opacity: 0.55; cursor: default; }

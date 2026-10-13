@@ -2474,6 +2474,18 @@ function init() {
   renderHistorial();
   mostrarPantalla("ingreso");
 
+  // Si venimos de "Mis ingresos diarios" con el total de un mes, lo precargamos.
+  const ingresoMes = cargarIngresoMes();
+  if (ingresoMes && ingresoMes.total > 0) {
+    if (ingresoMes.moneda && MONEDAS.some(function (m) { return m.codigo === ingresoMes.moneda; })) {
+      estado.config.moneda = ingresoMes.moneda;
+      sincronizarSelectMoneda();
+      actualizarSimboloMonto();
+    }
+    $("#monto").value = formatearNumeroMonto(ingresoMes.total, 2);
+    toast("Total de " + (ingresoMes.mes || "tu cuenta") + ": " + formatearNumeroMonto(ingresoMes.total, 2));
+  }
+
   // Tour guiado la primera vez: solo si todavia no guardo ningun mes.
   if (cargarHistorial().length > 0) marcarTourVisto();
   if (tourDisponible()) {

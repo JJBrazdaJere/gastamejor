@@ -31,3 +31,31 @@ _VARIABLES_OBLIGATORIAS = ("dbname", "user", "password")
 def variables_faltantes():
     """Devuelve la lista de datos obligatorios que faltan en el .env."""
     return [nombre for nombre in _VARIABLES_OBLIGATORIAS if not DB_CONFIG.get(nombre)]
+
+
+# --- Correo (verificacion de email) ---
+# CORREO_MODO="test" NO envia: imprime el codigo (ideal para probar).
+# CORREO_MODO="smtp" envia de verdad con los datos SMTP de abajo.
+CORREO_MODO = os.environ.get("CORREO_MODO", "test").strip().lower()
+
+CORREO_CONFIG = {
+    "host": os.environ.get("SMTP_HOST", ""),
+    "port": int(os.environ.get("SMTP_PORT", "587")),
+    "usuario": os.environ.get("SMTP_USER", ""),
+    "password": os.environ.get("SMTP_PASSWORD", ""),
+    "remitente": os.environ.get("SMTP_FROM", "") or os.environ.get("SMTP_USER", ""),
+    "tls": os.environ.get("SMTP_TLS", "1") == "1",
+}
+
+
+# --- API HTTP ---
+API_HOST = os.environ.get("API_HOST", "127.0.0.1")
+API_PUERTO = int(os.environ.get("API_PUERTO", "8000"))
+# Origenes permitidos por CORS (separados por coma). "*" = cualquiera (dev).
+API_ORIGENES = [o.strip() for o in os.environ.get("API_ORIGENES", "*").split(",") if o.strip()]
+
+# --- Sesiones / verificacion ---
+# Horas que dura una sesion iniciada (30 dias por defecto).
+SESION_HORAS = int(os.environ.get("SESION_HORAS", "720"))
+# Minutos de vigencia del codigo de verificacion de email.
+CODIGO_VIGENCIA_MIN = int(os.environ.get("CODIGO_VIGENCIA_MIN", "15"))

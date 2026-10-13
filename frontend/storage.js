@@ -399,3 +399,43 @@ function olvidarTour() {
     /* sin persistencia */
   }
 }
+
+/* ---------- Ingreso del mes (desde la cuenta / ingresos diarios) ----------
+   La pagina de cuenta (cuenta.html) suma los ingresos diarios del mes y
+   guarda ACA el total. La app lo usa para prellenar "Tu dinero de este mes".
+   Sin cuenta (modo invitado) estas funciones no se usan. */
+
+const CLAVE_INGRESO_MES = "gastamejor.ingresoMes.v1";
+
+function cargarIngresoMes() {
+  try {
+    const crudo = localStorage.getItem(CLAVE_INGRESO_MES);
+    if (!crudo) return null;
+    const datos = JSON.parse(crudo);
+    if (!datos || !isFinite(Number(datos.total))) return null;
+    return {
+      mes: String(datos.mes || ""),
+      total: Number(datos.total) || 0,
+      moneda: String(datos.moneda || "ARS"),
+      cantidad: Number(datos.cantidad) || 0,
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+function guardarIngresoMes(datos) {
+  try {
+    localStorage.setItem(CLAVE_INGRESO_MES, JSON.stringify(datos));
+  } catch (_) {
+    /* sin persistencia */
+  }
+}
+
+function borrarIngresoMes() {
+  try {
+    localStorage.removeItem(CLAVE_INGRESO_MES);
+  } catch (_) {
+    /* sin persistencia */
+  }
+}

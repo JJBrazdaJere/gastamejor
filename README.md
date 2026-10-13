@@ -28,6 +28,10 @@ Se publica automáticamente con **GitHub Pages** en cada push a `main`
 - **Exportar a PNG** y **generar link para compartir**.
 - Ahorro en **dólares** con cotización en vivo (dólar Bolsa/MEP por defecto).
 - Paneles de **Perfiles, Plan, Historial y Consejero**.
+- **Ingresos diarios** 💵: si cobrás por día, cargás cada jornada y la app suma
+  el mes (con **ingreso fijo mensual** opcional) y lo usa para el reparto.
+- **Cuentas de usuario** (opcional): registro con **email verificado**, login y
+  teléfono opcional; se puede seguir usando la app como invitado.
 - **Tutorial interactivo**, **tour guiado** y **página de pruebas** (335 tests).
 - **Responsive** (mobile-first desde 360px), en español y con formato ARS (`es-AR`).
 
@@ -40,12 +44,15 @@ Se publica automáticamente con **GitHub Pages** en cada push a `main`
 │   ├── app.js
 │   ├── styles.css
 │   ├── storage.js
+│   ├── cuenta.html / cuenta.js / api.js  # cuenta + ingresos diarios
 │   ├── pruebas.html / pruebas.js      # tests en el navegador
 │   ├── tutorial.html / datos-ejemplo.js
 │   └── tests/correr-tests.ps1         # runner headless (Edge)
 │
 ├── main.py                    # Backend (Python + PostgreSQL)
+├── servidor.py                # API HTTP JSON (y sirve frontend/)
 ├── config.py, conexion.py, base_datos.py, errores.py, validaciones.py
+├── seguridad.py, correo.py, cuentas.py, ingresos.py
 ├── clientes.py, productos.py, proveedores.py, empleados.py, ventas.py, reportes.py
 ├── migrations/                # migraciones SQL
 ├── tests/                     # tests del backend (pytest)
@@ -69,8 +76,14 @@ Abrí `frontend/index.html` en el navegador (o servilo con
 1. Iniciá **PostgreSQL** (puerto `5432`).
 2. Copiá `.env.example` a `.env` y completá tus credenciales.
 3. `python -m pip install -r requirements.txt`
-4. `python main.py`
-5. Tests: `python -m pytest`
+4. Aplicá las migraciones de `migrations/` (ver [README-BACKEND.md](README-BACKEND.md)).
+5. `python main.py` — menú de consola, **o**
+   `python servidor.py` — API HTTP para la app (sirve también `frontend/`, así
+   que podés abrir `http://127.0.0.1:8000/cuenta.html` y probar todo junto).
+6. Tests: `python -m pytest`
+
+> Las cuentas y los ingresos diarios necesitan el backend encendido. Sin él, la
+> app sigue funcionando igual en **modo invitado** (todo local en el navegador).
 
 ## 🧰 Tecnologías
 
@@ -79,10 +92,11 @@ Abrí `frontend/index.html` en el navegador (o servilo con
 
 ## 🗺️ Roadmap
 
-- [ ] Cuentas de usuario (usuario + contraseña + email; teléfono opcional)
-- [ ] Verificación de email
-- [ ] Carga de **ingresos diarios** que se suman al total del mes
+- [x] Cuentas de usuario (usuario + contraseña + email; teléfono opcional)
+- [x] Verificación de email (en modo test imprime el código; con SMTP envía de verdad)
+- [x] Carga de **ingresos diarios** que se suman al total del mes
 - [ ] Sincronización de configuración e historial con el backend
+- [ ] Publicar el backend en un hosting gratuito (para las cuentas online)
 
 ## 📄 Licencia
 
