@@ -1,0 +1,8 @@
+# Normaliza los finales de linea del repositorio (evita ruido CRLF/LF).
+* text=auto
+
+# Archivos binarios que NO deben normalizarse.
+*.png binary
+*.jpg binary
+*.ico binary
+*.zip binary
