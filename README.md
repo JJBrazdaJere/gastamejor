@@ -1,5 +1,9 @@
 # 💸 GastaMejor
 
+[![Demo en vivo](https://img.shields.io/badge/demo-en%20vivo-2ea44f?logo=githubpages&logoColor=white)](https://jjbrazdajere.github.io/gastamejor/)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-publicado-222222?logo=github&logoColor=white)](https://jjbrazdajere.github.io/gastamejor/)
+[![Licencia: MIT](https://img.shields.io/badge/Licencia-MIT-blue.svg)](LICENSE)
+
 App web de **finanzas personales** para distribuir el ingreso del mes entre
 **necesidades, deseos y ahorro**, con perfiles de ahorro, plan de acción mes a
 mes, historial y consejero.
@@ -7,6 +11,13 @@ mes, historial y consejero.
 El frontend es una app **estática (HTML/CSS/JS vanilla, sin frameworks)** que
 funciona 100% en el navegador. El backend es un proyecto **Python + PostgreSQL**
 pensado para dar soporte a cuentas de usuario e ingresos diarios.
+
+## 🔗 Demo en vivo
+
+👉 **https://jjbrazdajere.github.io/gastamejor/**
+
+Se publica automáticamente con **GitHub Pages** en cada push a `main`
+(workflow `.github/workflows/deploy-pages.yml`).
 
 ## ✨ Funcionalidades
 
