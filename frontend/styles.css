@@ -871,12 +871,45 @@ body:has(.modal:not([hidden])) .btn-reportar { display: none; }
 .tour-acciones .btn-primario:disabled,
 .tour-acciones .btn-secundario:disabled { opacity: 0.45; cursor: default; }
 
-/* Enlace con apariencia de boton en "Tus datos" */
-.acciones-columna .enlace-boton {
+/* Enlace con apariencia de boton: mismo alto, ancho y centrado que los
+   botones. Antes solo aplicaba dentro de ".acciones-columna", asi que el
+   enlace de la pantalla de ingreso (dentro de ".accesos") quedaba como un
+   <a> en linea, sin ancho ni alto, y se veia raro. Ahora es generico. */
+.enlace-boton {
   display: flex;
   align-items: center;
+  justify-content: center;
   text-decoration: none;
 }
+
+/* En "Tus datos" los botones van alineados a la izquierda. */
+.acciones-columna .enlace-boton {
+  justify-content: flex-start;
+}
+
+/* ---------- Zona peligrosa (borrar cuenta) ---------- */
+.tarjeta-peligro {
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  background: rgba(220, 38, 38, 0.05);
+}
+
+.btn-peligro {
+  width: 100%;
+  min-height: var(--tactil);
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: var(--espacio);
+  border: none;
+  background: #dc2626;
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.3);
+  transition: transform 0.05s ease, opacity 0.15s ease;
+}
+
+.btn-peligro:active { transform: scale(0.98); }
+.btn-peligro:disabled { opacity: 0.5; cursor: default; }
 
 /* ---------- Modal ---------- */
 .modal {

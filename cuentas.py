@@ -307,3 +307,23 @@ def cambiar_password(db, cliente_id, actual, nueva):
         )
     correo.enviar_aviso_nueva_password(fila[0])
     return True
+
+
+# ---------------------------------------------------------------------------
+# Eliminar cuenta
+# ---------------------------------------------------------------------------
+def eliminar_cuenta(db, cliente_id, password):
+    """Borra la cuenta del usuario (y, en cascada, sus ingresos y sesiones).
+
+    Exige la contrasena actual para evitar borrados accidentales. Devuelve True.
+    """
+    fila = consultar_uno(
+        db, "SELECT password_hash FROM clientes WHERE id = %s", (cliente_id,)
+    )
+    if not fila:
+        raise ErrorNoEncontrado("Cuenta no encontrada.")
+    if not verificar_password(password, fila[0]):
+        raise ErrorValidacion("La contrasena no es correcta.")
+    with transaccion(db):
+        ejecutar_afectando(db, "DELETE FROM clientes WHERE id = %s", (cliente_id,))
+    return True

@@ -541,6 +541,16 @@
     igual("catalogo: no duplica", estado.config.categorias.length, despues);
     cerrarCatalogo();
     ok("catalogo: cierra", q("#modal-catalogo").hidden === true);
+
+    // El enlace "Mis ingresos diarios" (dentro de .accesos) debe verse como un
+    // boton, no como un <a> en linea subrayado: misma caja que .btn-secundario.
+    var enlace = q(".accesos .enlace-boton");
+    ok("enlace 'Mis ingresos diarios' existe", !!enlace);
+    if (enlace) {
+      var estilo = getComputedStyle(enlace);
+      igual("enlace-boton se muestra como caja (flex)", estilo.display, "flex");
+      igual("enlace-boton sin subrayado", estilo.textDecorationLine, "none");
+    }
   });
 
   correr("Boton de reporte (WhatsApp)", function () {

@@ -7,6 +7,7 @@ from cuentas import (
     cambiar_password,
     cerrar_sesion,
     cliente_por_token,
+    eliminar_cuenta,
     iniciar_sesion,
     obtener_por_id,
     registrar,
@@ -14,6 +15,7 @@ from cuentas import (
     verificar_email,
 )
 from errores import ErrorNoEncontrado, ErrorUnico, ErrorValidacion
+from ingresos import agregar, listar
 
 
 def _registrar_verificado(db, sufijo):
@@ -148,3 +150,32 @@ def test_reenviar_codigo_a_cuenta_verificada_avisa(db):
     r = _registrar_verificado(db, "_r2")
     with pytest.raises(ErrorValidacion):
         reenviar_codigo(db, r["email"])
+
+
+# ---------------------------------------------------------------------------
+# Eliminar cuenta
+# ---------------------------------------------------------------------------
+def test_eliminar_cuenta_borra_cuenta_y_datos(db):
+    r = _registrar_verificado(db, "_d1")
+    sesion = iniciar_sesion(db, r["usuario"], "password123")
+    agregar(db, r["id"], "1000", "2026-01-15")
+
+    assert eliminar_cuenta(db, r["id"], "password123") is True
+
+    # Ya no existe la cuenta, ni su sesion, ni sus ingresos (borrado en cascada).
+    assert obtener_por_id(db, r["id"]) is None
+    assert cliente_por_token(db, sesion["token"]) is None
+    assert listar(db, r["id"]) == []
+
+
+def test_eliminar_cuenta_password_mala_no_borra(db):
+    r = _registrar_verificado(db, "_d2")
+    with pytest.raises(ErrorValidacion):
+        eliminar_cuenta(db, r["id"], "no-es-la-clave")
+    # La cuenta sigue existiendo.
+    assert obtener_por_id(db, r["id"]) is not None
+
+
+def test_eliminar_cuenta_inexistente_avisa(db):
+    with pytest.raises(ErrorNoEncontrado):
+        eliminar_cuenta(db, 99999999, "password123")

@@ -147,6 +147,7 @@ const API = {
   perfil: () => apiPedir("GET", "/api/perfil"),
   actualizarPerfil: (datos) => apiPedir("PATCH", "/api/perfil", datos),
   cambiarPassword: (actual, nueva) => apiPedir("POST", "/api/password", { actual: actual, nueva: nueva }),
+  eliminarCuenta: (password) => apiPedir("DELETE", "/api/cuenta", { password: password }),
   ingresos: (mes) =>
     apiPedir("GET", "/api/ingresos" + (mes ? "?mes=" + encodeURIComponent(mes) : "")),
   agregarIngreso: (datos) => apiPedir("POST", "/api/ingresos", datos),

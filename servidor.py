@@ -13,6 +13,7 @@ Endpoints (todos bajo /api):
     GET    /api/perfil                    (auth)
     PATCH  /api/perfil                    {telefono?, ingreso_fijo_mensual?, moneda?} (auth)
     POST   /api/password                  {actual, nueva} (auth)
+    DELETE /api/cuenta                    {password} (auth)   -> borra la cuenta y sus datos
     GET    /api/ingresos?mes=AAAA-MM      (auth)
     POST   /api/ingresos                  {monto, fecha?, descripcion?} (auth)
     DELETE /api/ingresos/{id}             (auth)
@@ -298,6 +299,15 @@ class Manejador(BaseHTTPRequestHandler):
             with db:
                 cuentas.cambiar_password(db, cliente["id"], datos.get("actual"), datos.get("nueva"))
             return self._json(200, {"ok": True, "mensaje": "Contrasena actualizada."})
+
+        if ruta == "/api/cuenta" and metodo == "DELETE":
+            datos = self._leer_json()
+            db, cliente = self._con_id()
+            if not db:
+                return
+            with db:
+                cuentas.eliminar_cuenta(db, cliente["id"], datos.get("password"))
+            return self._json(200, {"ok": True, "mensaje": "Cuenta eliminada."})
 
         if ruta == "/api/ingresos" and metodo == "GET":
             db, cliente = self._con_id()

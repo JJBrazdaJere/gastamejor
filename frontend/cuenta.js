@@ -475,6 +475,40 @@ async function salir() {
   toast("Sesión cerrada.");
 }
 
+/* Borra la cuenta del usuario. Pide la contraseña y una confirmación extra
+   porque es una acción irreversible (se borran tambien todos los ingresos). */
+async function borrarCuenta() {
+  mostrarError("#error-borrar", "");
+  const password = $("#borrar-password").value;
+  if (!password) {
+    mostrarError("#error-borrar", "Escribí tu contraseña para confirmar.");
+    $("#borrar-password").focus();
+    return;
+  }
+  const seguro = window.confirm(
+    "¿Seguro que querés borrar tu cuenta?\n\n" +
+      "Se van a eliminar tu cuenta y TODOS tus ingresos. " +
+      "Esta acción no se puede deshacer."
+  );
+  if (!seguro) return;
+
+  const boton = $("#btn-borrar-cuenta");
+  boton.disabled = true;
+  try {
+    await API.eliminarCuenta(password);
+    apiBorrarToken();
+    estadoCuenta.cliente = null;
+    $("#borrar-password").value = "";
+    mostrarTab("login");
+    mostrarVista("auth");
+    toast("Tu cuenta fue eliminada.");
+  } catch (error) {
+    mostrarError("#error-borrar", error.message);
+  } finally {
+    boton.disabled = false;
+  }
+}
+
 /* ---------- Servidor (avanzado) ---------- */
 async function guardarUrl() {
   apiGuardarUrl($("#api-url").value.trim());
@@ -498,6 +532,7 @@ function conectarEventos() {
   $("#btn-verificar").addEventListener("click", hacerVerificacion);
   $("#btn-reenviar").addEventListener("click", reenviarCodigo);
   $("#btn-logout").addEventListener("click", salir);
+  $("#btn-borrar-cuenta").addEventListener("click", borrarCuenta);
   $("#btn-api-url").addEventListener("click", guardarUrl);
 
   $("#login-password").addEventListener("keydown", function (e) {

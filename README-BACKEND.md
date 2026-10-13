@@ -107,8 +107,9 @@ teléfono opcional) e **ingresos diarios**: cada usuario carga lo que gana cada
 día y el total del mes es la suma de esos ingresos **más** su
 `ingreso_fijo_mensual` (opcional).
 
-- `cuentas.py`: registro, verificación de email, login/sesión, perfil y cambio
-  de contraseña. Usa la tabla `clientes` (ampliada por la migración 004).
+- `cuentas.py`: registro, verificación de email, login/sesión, perfil, cambio
+  de contraseña y **eliminación de cuenta** (con contraseña; en cascada borra
+  ingresos y sesiones). Usa la tabla `clientes` (ampliada por la migración 004).
 - `ingresos.py`: alta/baja/listado de ingresos diarios y resúmenes por mes/año.
 - `seguridad.py`: **scrypt** con sal aleatoria para las contraseñas, tokens de
   sesión y códigos de verificación aleatorios.
@@ -155,6 +156,7 @@ del `501` en HTML que da `http.server` por defecto.
 | GET | `/api/perfil` | Datos de la cuenta |
 | PATCH | `/api/perfil` | Actualiza teléfono / ingreso fijo / moneda |
 | POST | `/api/password` | Cambia la contraseña |
+| DELETE | `/api/cuenta` | Borra la cuenta (pide `password`) y todos sus datos |
 | GET | `/api/ingresos?mes=AAAA-MM` | Lista los ingresos (de un mes o todos) |
 | POST | `/api/ingresos` | Agrega un ingreso diario |
 | DELETE | `/api/ingresos/{id}` | Elimina un ingreso |
