@@ -72,3 +72,7 @@ Abrí `frontend/index.html` en el navegador (o servilo con
 - [ ] Verificación de email
 - [ ] Carga de **ingresos diarios** que se suman al total del mes
 - [ ] Sincronización de configuración e historial con el backend
+
+## 📄 Licencia
+
+Este proyecto está bajo la licencia **MIT** — ver [LICENSE](LICENSE).

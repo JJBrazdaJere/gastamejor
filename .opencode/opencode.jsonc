@@ -1,0 +1,16 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  // Modelo por defecto. Los subagentes heredan este modelo salvo que definan otro.
+  "model": "opencode/big-pickle",
+
+  // Agente que se usa al abrir una sesion nueva en este proyecto.
+  "default_agent": "orquestador",
+
+  // Atajo para arrancar de cero. Escribe /iniciar-app en el chat.
+  "commands": {
+    "iniciar-app": {
+      "description": "Arranca la construccion de la app web de distribucion de gastos",
+      "template": "Actua como el agente 'orquestador'. Entrevistame para conocer mis gastos fijos, mis metas de ahorro y mi ingreso. Luego coordina a 'analista-financiero' (categorias y porcentajes), 'arquitecto' (estructura web), 'marketer-web' (interfaz UX con enfoque en marketing) y 'visual-designer' (colores y formas), y despues a 'desarrollador' y 'revisor' para construir una web responsive en HTML/CSS/JS que, dado un monto, lo distribuya porcentualmente entre mis categorias de gastos. Debe ser facil de usar desde el celular (iPhone y Android) y el navegador, con exportar/importar y enlace compartible."
+    }
+  }
+}
