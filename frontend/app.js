@@ -1768,6 +1768,13 @@ function salirDelEjemplo() {
   location.reload();
 }
 
+/* Pantalla inicial al abrir la app: con el ejemplo cargado, arranca en el
+   Historial (ya tiene datos); si no, en la pantalla de ingreso. */
+function irAPantallaInicial() {
+  if (hayEjemploCargado()) mostrarPestana("historial");
+  else mostrarPantalla("ingreso");
+}
+
 /* ---------- Pantalla 3: ajustar ---------- */
 
 function textoDerivadoCategoria(c, idx, moneda, ingreso, reparto) {
@@ -2587,10 +2594,11 @@ function init() {
   actualizarBotonEjemplo();
   iniciarCotizacion();
   renderHistorial();
-  mostrarPantalla("ingreso");
+  irAPantallaInicial();
 
   // Si venimos de "Mis ingresos diarios" con el total de un mes, lo precargamos.
-  const ingresoMes = cargarIngresoMes();
+  // (Con el ejemplo cargado no, para no tapar el Historial.)
+  const ingresoMes = hayEjemploCargado() ? null : cargarIngresoMes();
   if (ingresoMes && ingresoMes.total > 0) {
     if (ingresoMes.moneda && MONEDAS.some(function (m) { return m.codigo === ingresoMes.moneda; })) {
       estado.config.moneda = ingresoMes.moneda;
@@ -2605,7 +2613,7 @@ function init() {
   if (cargarHistorial().length > 0) marcarTourVisto();
   if (tourDisponible()) {
     setTimeout(iniciarTour, 600);
-  } else {
+  } else if (!hayEjemploCargado()) {
     $("#monto").focus();
   }
 }

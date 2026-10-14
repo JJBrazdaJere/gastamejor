@@ -227,7 +227,10 @@ La carpeta incluye tres páginas extra (**no forman parte de la app**: no tocan
   **▶️ Probar con el ejemplo** (carga los 12 meses en el navegador y abre la app;
   el botón vive solo acá) y **Abrir la app**.
 - Si cargás el ejemplo, dentro de la **app** aparece un botón flotante
-  **✕ Salir del ejemplo** para borrarlo y volver al estado normal.
+  **✕ Salir del ejemplo** para borrarlo y volver al estado normal (en el celular
+  se muestra como **✕ Salir**). Al abrir la app con el ejemplo cargado arrancás
+  directo en el **📅 Historial** (con los 12 meses ya cargados), sin que te pida
+  un monto.
 
 ### 🧪 `pruebas.html` — pruebas a un clic (para chequear vos mismo)
 

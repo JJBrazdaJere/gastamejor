@@ -837,6 +837,52 @@
     actualizarBotonEjemplo();
   });
 
+  /* ---------- Boton "Salir" (corto) e ingreso al Historial ---------- */
+
+  correr("Boton Salir (corto) e ingreso al Historial", function () {
+    // 1) El boton flotante tiene las dos etiquetas: la larga y la corta.
+    var salir = q("#btn-salir-ejemplo");
+    ok("existe el boton 'Salir del ejemplo'", !!salir);
+    if (salir) {
+      var largo = salir.querySelector(".btn-salir-ejemplo-txt");
+      var corto = salir.querySelector(".btn-salir-ejemplo-txt-corto");
+      ok("tiene la etiqueta larga 'Salir del ejemplo'", !!largo && /salir del ejemplo/i.test(largo.textContent),
+        largo ? largo.textContent.trim() : "no existe");
+      ok("tiene la etiqueta corta 'Salir'", !!corto && /^salir$/i.test(corto.textContent.trim()),
+        corto ? corto.textContent.trim() : "no existe");
+    }
+
+    var antes = null;
+    try { antes = localStorage.getItem("gastamejor.ejemplo.v1"); } catch (_) { /* nada */ }
+
+    // 2) Con el ejemplo cargado, la app arranca en el Historial (sin pedir monto).
+    try { localStorage.setItem("gastamejor.ejemplo.v1", "1"); } catch (_) { /* nada */ }
+    ok("irAPantallaInicial existe", typeof window.irAPantallaInicial === "function");
+    if (typeof window.irAPantallaInicial === "function") {
+      irAPantallaInicial();
+      igual("con ejemplo: la pestana activa es 'historial'", pestanaActiva, "historial");
+      var tablero = q("#tablero");
+      igual("con ejemplo: #tablero tiene data-tab 'historial'",
+        tablero ? tablero.getAttribute("data-tab") : null, "historial");
+    }
+
+    // 3) Sin el ejemplo, arranca en la pantalla de ingreso (comportamiento normal).
+    try { localStorage.removeItem("gastamejor.ejemplo.v1"); } catch (_) { /* nada */ }
+    if (typeof window.irAPantallaInicial === "function") {
+      irAPantallaInicial();
+      igual("sin ejemplo: la pantalla activa es 'ingreso'", pantallaRepartoActual(), "ingreso");
+    }
+
+    // Restaurar el estado previo.
+    try {
+      if (antes === null) localStorage.removeItem("gastamejor.ejemplo.v1");
+      else localStorage.setItem("gastamejor.ejemplo.v1", antes);
+    } catch (_) { /* nada */ }
+    actualizarBotonEjemplo();
+    mostrarPestana("reparto");
+    mostrarPantalla("ingreso");
+  });
+
   /* ---------- Resultado ---------- */
 
   restaurar();
