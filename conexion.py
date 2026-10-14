@@ -10,7 +10,9 @@ su propia transaccion y la confirma o revierte.
 import psycopg
 
 
-def conectar_db(host, port, dbname, user, password):
+def conectar_db(host, port, dbname, user, password, sslmode=None):
+    # `sslmode` es opcional: en local no se usa; en la nube (Neon, etc.) es "require".
+    opciones = {"sslmode": sslmode} if sslmode else {}
     return psycopg.connect(
         host=host,
         port=port,
@@ -18,4 +20,5 @@ def conectar_db(host, port, dbname, user, password):
         user=user,
         password=password,
         autocommit=True,
+        **opciones,
     )

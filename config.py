@@ -24,6 +24,11 @@ DB_CONFIG = {
     "password": os.environ.get("PGPASSWORD"),
 }
 
+# SSL de la conexión (necesario en Postgres en la nube, ej. Neon: "require").
+_PGSSLMODE = os.environ.get("PGSSLMODE")
+if _PGSSLMODE:
+    DB_CONFIG["sslmode"] = _PGSSLMODE
+
 # Variables que NO tienen valor por defecto: si faltan, no se puede conectar.
 _VARIABLES_OBLIGATORIAS = ("dbname", "user", "password")
 
@@ -47,10 +52,16 @@ CORREO_CONFIG = {
     "tls": os.environ.get("SMTP_TLS", "1") == "1",
 }
 
+# API HTTP de Brevo (CORREO_MODO="api"): envía por HTTPS (443), sin depender
+# del puerto SMTP. Es la opción robusta en hostings que bloquean SMTP (Render).
+BREVO_API_KEY = os.environ.get("BREVO_API_KEY", "")
+BREVO_API_URL = os.environ.get("BREVO_API_URL", "https://api.brevo.com/v3/smtp/email")
+
 
 # --- API HTTP ---
 API_HOST = os.environ.get("API_HOST", "127.0.0.1")
-API_PUERTO = int(os.environ.get("API_PUERTO", "8000"))
+# Puerto: API_PUERTO o, si no está, PORT (lo define el hosting, ej. Render).
+API_PUERTO = int(os.environ.get("API_PUERTO") or os.environ.get("PORT", "8000"))
 # Origenes permitidos por CORS (separados por coma). "*" = cualquiera (dev).
 API_ORIGENES = [o.strip() for o in os.environ.get("API_ORIGENES", "*").split(",") if o.strip()]
 

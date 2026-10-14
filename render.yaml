@@ -1,0 +1,42 @@
+# Despliegue gratuito del backend de GastaMejor en Render.
+#
+# Uso: en Render -> New -> Blueprint -> elegí el repo gastamejor.
+# Render lee este archivo y te pide los valores marcados con sync: false
+# (esos NO van en el repo; se cargan en el panel de Render).
+
+services:
+  - type: web
+    name: gastamejor-api
+    runtime: python
+    plan: free
+    region: ohio
+    buildCommand: pip install -r requirements.txt
+    startCommand: python servidor.py
+    healthCheckPath: /api/salud
+    envVars:
+      # --- API ---
+      - key: API_HOST
+        value: 0.0.0.0
+      - key: API_ORIGENES
+        value: "*"
+      # --- Correo por la API HTTP de Brevo (no usa SMTP) ---
+      - key: CORREO_MODO
+        value: api
+      - key: SMTP_FROM
+        value: GastaMejor <jerebrazda7@gmail.com>
+      # --- Base de datos (Neon). Completar en el panel de Render ---
+      - key: PGHOST
+        sync: false
+      - key: PGPORT
+        value: "5432"
+      - key: PGDATABASE
+        sync: false
+      - key: PGUSER
+        sync: false
+      - key: PGPASSWORD
+        sync: false
+      - key: PGSSLMODE
+        value: require
+      # --- Brevo API key (la genera Brevo) ---
+      - key: BREVO_API_KEY
+        sync: false
