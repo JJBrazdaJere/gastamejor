@@ -139,6 +139,24 @@ function mostrarError(id, mensaje) {
 }
 
 /* ---------- Sesión ---------- */
+/* Refresca el botón del encabezado (sesion.js lo dibuja). */
+function refrescarSesion() {
+  if (typeof window.gmActualizarSesion === "function") window.gmActualizarSesion();
+}
+
+/* Guarda el nombre para que el encabezado pueda mostrar "Hola, <nombre>". */
+function recordarNombre(cliente) {
+  if (cliente && typeof window.gmGuardarNombre === "function") {
+    window.gmGuardarNombre(cliente.nombre || cliente.usuario || "");
+  }
+}
+
+/* Limpia el nombre y actualiza el encabezado tras cerrar sesión. */
+function olvidarSesion() {
+  if (typeof window.gmBorrarNombre === "function") window.gmBorrarNombre();
+  refrescarSesion();
+}
+
 async function iniciar() {
   // Rellenar el selector de moneda y el input de mes.
   const selMoneda = $("#perfil-moneda");
@@ -168,6 +186,7 @@ async function iniciar() {
     } catch (error) {
       if (error.status === 401) {
         apiBorrarToken();
+        olvidarSesion();
       } else {
         toast(error.message);
       }
@@ -201,6 +220,8 @@ async function comprobarBackend() {
 async function cargarPanel() {
   const datos = await API.perfil();
   estadoCuenta.cliente = datos.cliente;
+  recordarNombre(datos.cliente);
+  refrescarSesion();
   pintarPerfil();
   mostrarVista("panel");
   await cargarMes(estadoCuenta.mes);
@@ -362,6 +383,8 @@ async function hacerLogin() {
     const res = await API.login(usuario, password);
     apiGuardarToken(res.token);
     estadoCuenta.cliente = res.cliente;
+    recordarNombre(res.cliente);
+    refrescarSesion();
     $("#login-password").value = "";
     pintarPerfil();
     mostrarVista("panel");
@@ -432,6 +455,8 @@ async function hacerVerificacion() {
       const res = await API.login(usuario, password);
       apiGuardarToken(res.token);
       estadoCuenta.cliente = res.cliente;
+      recordarNombre(res.cliente);
+      refrescarSesion();
       $("#reg-password").value = "";
       pintarPerfil();
       mostrarVista("panel");
@@ -470,6 +495,7 @@ async function salir() {
   }
   apiBorrarToken();
   estadoCuenta.cliente = null;
+  olvidarSesion();
   mostrarTab("login");
   mostrarVista("auth");
   toast("Sesión cerrada.");
@@ -498,6 +524,7 @@ async function borrarCuenta() {
     await API.eliminarCuenta(password);
     apiBorrarToken();
     estadoCuenta.cliente = null;
+    olvidarSesion();
     $("#borrar-password").value = "";
     mostrarTab("login");
     mostrarVista("auth");

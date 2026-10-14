@@ -13,6 +13,10 @@
     <header class="encabezado">
       <button id="btn-atras" class="btn-atras" aria-label="Volver" hidden>←</button>
       <h1 class="logo"><img src="logo.png" alt="Logo de GastaMejor" class="logo-imagen">GastaMejor</h1>
+      <div class="sesion-header">
+        <span id="sesion-nombre" class="sesion-header-nombre" hidden></span>
+        <button id="btn-sesion" class="btn-sesion" type="button">Iniciar sesión</button>
+      </div>
     </header>
 
     <main>
@@ -82,8 +86,8 @@
               <div id="grafico" class="grafico" role="img" aria-label="Gráfico de torta del reparto"></div>
 
               <div class="acciones acciones-ajuste">
-                <button id="btn-ajustar" class="btn-secundario">Ajustar Gastos Actuales</button>
-                <button id="btn-nuevo" class="btn-secundario">Corregir Monto</button>
+                <button id="btn-ajustar" class="btn-secundario btn-ajustar">Ajustar mis gastos</button>
+                <button id="btn-nuevo" class="btn-secundario btn-nuevo">Corregir Monto</button>
               </div>
 
               <div id="resultado-lista" aria-label="Reparto por categorías"></div>
@@ -246,6 +250,9 @@
   </div>
 
   <script src="storage.js"></script>
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script src="sesion.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

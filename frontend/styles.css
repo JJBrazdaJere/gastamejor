@@ -24,6 +24,12 @@
   --necesidad: #0284c7;        /* azul  */
   --deseo: #d97706;            /* ambar */
   --ahorro: #059669;           /* verde */
+  --necesidad-suave: #e0f2fe;
+  --necesidad-borde: #bae6fd;
+  --deseo-suave: #fef3c7;
+  --deseo-borde: #fde68a;
+  --ahorro-suave: #d1fae5;
+  --ahorro-borde: #a7f3d0;
 
   /* Formas */
   --radio: 16px;
@@ -64,6 +70,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
   padding: 8px 0 var(--espacio);
 }
 
@@ -96,6 +103,44 @@ body {
   color: var(--texto);
   flex: none;
 }
+
+/* ---------- Botón de sesión (siempre visible, arriba a la derecha) ---------- */
+.sesion-header {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sesion-header-nombre {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto-suave);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-sesion {
+  flex: none;
+  border: none;
+  border-radius: 999px;
+  background: var(--primario-oscuro);
+  color: #ffffff;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  min-height: 40px;
+  padding: 0 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(4, 120, 87, 0.30);
+  transition: transform 0.05s ease, opacity 0.15s ease;
+}
+
+.btn-sesion:active { transform: scale(0.97); }
 
 /* ---------- Tarjetas y textos ---------- */
 .tarjeta {
@@ -199,6 +244,20 @@ body {
   background: var(--tarjeta);
   color: var(--texto);
   border: var(--borde-suave);
+}
+
+/* Botones con color propio (pantalla de resultado), para distinguirlos
+   del resto de los botones secundarios. */
+.btn-ajustar {
+  background: var(--necesidad-suave);
+  border-color: var(--necesidad-borde);
+  color: #075985;
+}
+
+.btn-nuevo {
+  background: var(--deseo-suave);
+  border-color: var(--deseo-borde);
+  color: #92400e;
 }
 
 .btn-ancho { margin-top: 12px; }
@@ -317,6 +376,13 @@ body {
 
 .fila-sin-designar .fila-nombre,
 .fila-sin-designar .fila-monto { color: var(--texto-suave); }
+
+/* Fondo por grupo: cada categoría se tiñe con el color de su grupo
+   (necesidades = azul, deseos = ámbar, ahorro = verde) + una barrita
+   lateral del mismo color. */
+.fila-necesidad { background: var(--necesidad-suave); border-color: var(--necesidad-borde); box-shadow: inset 4px 0 0 var(--necesidad); }
+.fila-deseo     { background: var(--deseo-suave);     border-color: var(--deseo-borde);     box-shadow: inset 4px 0 0 var(--deseo); }
+.fila-ahorro    { background: var(--ahorro-suave);    border-color: var(--ahorro-borde);    box-shadow: inset 4px 0 0 var(--ahorro); }
 
 .fila-nombre { font-weight: 600; }
 
@@ -517,6 +583,11 @@ body {
   padding: 12px;
   margin-bottom: 10px;
 }
+
+/* Mismo tinte por grupo que en la lista de resultados. */
+.fila-ajuste-necesidad { background: var(--necesidad-suave); box-shadow: inset 4px 0 0 var(--necesidad); }
+.fila-ajuste-deseo     { background: var(--deseo-suave);     box-shadow: inset 4px 0 0 var(--deseo); }
+.fila-ajuste-ahorro    { background: var(--ahorro-suave);    box-shadow: inset 4px 0 0 var(--ahorro); }
 
 .ajuste-fila-nombre {
   display: flex;

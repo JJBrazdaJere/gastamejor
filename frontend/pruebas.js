@@ -715,6 +715,82 @@
     q("#tour").hidden = true;
   });
 
+  correr("Boton de sesion (encabezado)", function () {
+    var boton = q("#btn-sesion");
+    ok("existe el boton de sesion", !!boton);
+    if (!boton) return;
+    ok("esta dentro del encabezado", !!boton.closest(".encabezado"));
+    ok("tiene la clase btn-sesion", boton.classList.contains("btn-sesion"));
+    ok("existe la etiqueta del nombre", !!q("#sesion-nombre"));
+
+    // Guardamos el estado real y lo restauramos al final.
+    var tokenAntes = (typeof apiToken === "function") ? apiToken() : null;
+    var nombreAntes = null;
+    try { nombreAntes = localStorage.getItem("gastamejor.nombre.v1"); } catch (_) { /* nada */ }
+
+    // Sin sesion.
+    apiBorrarToken();
+    if (window.gmBorrarNombre) window.gmBorrarNombre();
+    if (window.gmActualizarSesion) window.gmActualizarSesion();
+    igual("sin sesion: dice 'Iniciar sesion'", boton.textContent, "Iniciar sesión");
+    ok("sin sesion: el nombre queda oculto", q("#sesion-nombre").hidden === true);
+
+    // Con sesion.
+    apiGuardarToken("token-de-prueba");
+    if (window.gmGuardarNombre) window.gmGuardarNombre("Ana");
+    if (window.gmActualizarSesion) window.gmActualizarSesion();
+    igual("con sesion: dice 'Cerrar sesion'", boton.textContent, "Cerrar sesión");
+    igual("con sesion: muestra el nombre", q("#sesion-nombre").textContent, "Hola, Ana");
+    ok("con sesion: el nombre se ve", q("#sesion-nombre").hidden === false);
+
+    // Restaurar el estado previo.
+    if (tokenAntes) apiGuardarToken(tokenAntes);
+    else apiBorrarToken();
+    try {
+      if (nombreAntes === null) localStorage.removeItem("gastamejor.nombre.v1");
+      else localStorage.setItem("gastamejor.nombre.v1", nombreAntes);
+    } catch (_) { /* nada */ }
+    if (window.gmActualizarSesion) window.gmActualizarSesion();
+  });
+
+  correr("Colores y nombres por grupo", function () {
+    // Botones con color propio en la pantalla de resultado.
+    igual("btn-ajustar: dice 'Ajustar mis gastos'", q("#btn-ajustar").textContent.trim(), "Ajustar mis gastos");
+    ok("btn-ajustar: tiene su clase de color", q("#btn-ajustar").classList.contains("btn-ajustar"));
+    ok("btn-nuevo: tiene su clase de color", q("#btn-nuevo").classList.contains("btn-nuevo"));
+
+    // Fondos por grupo en la lista de resultados.
+    resetEstado(100000);
+    renderResultado();
+    var filas = qall("#resultado-lista .fila:not(.fila-sin-designar)");
+    ok("resultado: hay filas", filas.length > 0, String(filas.length));
+    ok("resultado: cada fila lleva su clase de grupo",
+      filas.every(function (f) { return /(^|\s)fila-(necesidad|deseo|ahorro)(\s|$)/.test(f.className); }),
+      filas.map(function (f) { return f.className; }).join(" | "));
+
+    var filaNec = qall("#resultado-lista .fila-necesidad")[0];
+    var filaDes = qall("#resultado-lista .fila-deseo")[0];
+    if (filaNec && filaDes) {
+      var cNec = getComputedStyle(filaNec).backgroundColor;
+      var cDes = getComputedStyle(filaDes).backgroundColor;
+      ok("cada grupo tiene un fondo propio", cNec !== cDes, cNec + " vs " + cDes);
+      ok("el fondo del grupo no es transparente",
+        cNec !== "rgba(0, 0, 0, 0)" && cNec !== "transparent", cNec);
+    }
+
+    // Fondos por grupo en la lista de ajuste.
+    renderAjustar();
+    var ajustes = qall("#ajustar-lista .fila-ajuste");
+    ok("ajustar: hay filas", ajustes.length > 0, String(ajustes.length));
+    ok("ajustar: cada fila lleva la clase de su grupo",
+      ajustes.every(function (f) {
+        var idx = Number(f.dataset.idx);
+        var grupo = (estado.config.categorias[idx] || {}).grupo || "necesidad";
+        return f.classList.contains("fila-ajuste-" + grupo);
+      }),
+      ajustes.map(function (f) { return f.dataset.idx + ":" + f.className; }).join(" | "));
+  });
+
   /* ---------- Resultado ---------- */
 
   restaurar();

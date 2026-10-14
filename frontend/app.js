@@ -368,7 +368,7 @@ function renderResultado() {
           '<span class="fila-monto-usd">US$ ' + formatearNumeroMonto(Number(c.monto) || 0, 2) + "</span>"
         : dinero(cfg.moneda, montoCategoria);
       const fila = document.createElement("div");
-      fila.className = "fila";
+      fila.className = "fila fila-" + grupo;
       const delta = planDeltas ? planDeltas[index] : null;
       fila.innerHTML =
         '<span class="fila-dot" style="background:' + colorDeCategoria(index) + '" aria-hidden="true"></span>' +
@@ -1742,7 +1742,7 @@ function crearFilaAjuste(c, i, moneda, ingreso, reparto) {
     : '<span class="pct-unidad">' + (esPorcentaje ? "%" : "$") + "</span>";
 
   const fila = document.createElement("div");
-  fila.className = "fila-ajuste";
+  fila.className = "fila-ajuste fila-ajuste-" + (c.grupo || "necesidad");
   fila.dataset.idx = String(i);
   fila.innerHTML =
     '<div class="ajuste-fila-nombre">' +
