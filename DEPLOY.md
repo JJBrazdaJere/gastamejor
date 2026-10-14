@@ -41,18 +41,40 @@ GitHub Pages (frontend estático)  ->  Render (backend Python, gratis)  ->  Neon
    | `PGPASSWORD`| `CLAVE`                  |
    | `PGSSLMODE` | `require`                |
 
+   > ⚠️ **Importante — usá el host SIN `-pooler`.** Neon da dos hosts: uno con
+   > `-pooler` (PgBouncer) y uno directo. El **pooler deja `search_path` vacío**
+   > y además rechaza `search_path`, así que la app **no encontraría las
+   > tablas**. Usá el host **directo** (sin `-pooler`), por ejemplo
+   > `ep-xxxx.us-east-2.aws.neon.tech`, y asegurate de tener
+   > `search_path` en `public` (se deja así con una sola vez:
+   > `ALTER DATABASE neondb SET search_path TO public;`).
+
 ## Paso 2 — Crear las tablas en Neon
 
-Hay que aplicar las migraciones una vez. Desde la carpeta del proyecto,
-con PostgreSQL instalado (`psql`):
+Ojo: las migraciones de `migrations/` solo **modifican** un esquema que ya
+existía (no crean las tablas base). Para una base nueva lo más simple y
+seguro es **copiar el esquema de tu base local**. Con PostgreSQL instalado:
 
 ```powershell
+# 1) Volcar SOLO el esquema de la base local (sin datos)
+$env:PGPASSWORD = "TU_CLAVE_LOCAL"
+& pg_dump --schema-only --no-owner --no-privileges -h localhost -U postgres -d practica_sql -f esquema.sql
+
+# 2) Cargarlo en Neon (host DIRECTO, sin -pooler)
+$env:PGPASSWORD = "CLAVE_NEON"
 $url = "postgresql://USUARIO:CLAVE@ep-xxxx.us-east-2.aws.neon.tech/neondb?sslmode=require"
-Get-ChildItem migrations\*.sql |
-  Where-Object { $_.Name -notlike "*rollback*" } |
-  Sort-Object Name |
-  ForEach-Object { & psql $url -f $_.FullName }
+& psql -d $url -v ON_ERROR_STOP=1 -f esquema.sql
+
+# 3) Dejar search_path en public (una sola vez)
+& psql -d $url -c "ALTER DATABASE neondb SET search_path TO public;"
+
+# 4) Verificar
+& psql -d $url -c "\dt"
+& psql -d $url -c "select count(*) from clientes;"
 ```
+
+> Si preferís arrancar de cero, primero creá las tablas base y después sí
+> aplicá las migraciones en orden (ignorando las `*_rollback.sql`).
 
 ## Paso 3 — Clave de la API de Brevo
 
