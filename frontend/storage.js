@@ -13,6 +13,7 @@ const CLAVE_CONFIG = "gastamejor.config.v1";
 const CLAVE_COTIZACION = "gastamejor.cotizacion.v1";
 const CLAVE_HISTORIAL = "gastamejor.historial.v1";
 const CLAVE_TOUR = "gastamejor.tour.v1";
+const CLAVE_EJEMPLO = "gastamejor.ejemplo.v1";
 const VERSION_CONFIG = 3;
 const VERSION_ENLACE = 3;
 

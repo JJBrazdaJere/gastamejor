@@ -791,6 +791,52 @@
       ajustes.map(function (f) { return f.dataset.idx + ":" + f.className; }).join(" | "));
   });
 
+  /* ---------- Guardar PNG y salir del ejemplo ---------- */
+
+  correr("Guardar PNG y salir del ejemplo", function () {
+    // El boton de "Tus datos" ahora se llama "Guardar".
+    var btn = q("#btn-exportar");
+    ok("existe el boton #btn-exportar", !!btn);
+    if (btn) ok("el boton dice 'Guardar'", /\bguardar\b/i.test(btn.textContent), btn.textContent.trim());
+
+    // Ya no esta el boton de enlace.
+    ok("no queda el boton 'Enlace para otro dispositivo'", !q("#btn-enlace"));
+
+    // Funciones de compartir/descargar presentes.
+    ok("guardarImagenReparto existe", typeof window.guardarImagenReparto === "function");
+    ok("compartirODescargarImagen existe", typeof window.compartirODescargarImagen === "function");
+    ok("hayEjemploCargado existe", typeof window.hayEjemploCargado === "function");
+
+    // El tour menciona el boton.
+    ok("el tour tiene un paso para #btn-exportar",
+      Array.isArray(PASOS_TOUR) && PASOS_TOUR.some(function (p) { return p.sel === "#btn-exportar"; }));
+
+    // Boton flotante "Salir del ejemplo".
+    var salir = q("#btn-salir-ejemplo");
+    ok("existe el boton 'Salir del ejemplo'", !!salir);
+    if (!salir) return;
+
+    var antes = null;
+    try { antes = localStorage.getItem("gastamejor.ejemplo.v1"); } catch (_) { /* nada */ }
+
+    try { localStorage.removeItem("gastamejor.ejemplo.v1"); } catch (_) { /* nada */ }
+    actualizarBotonEjemplo();
+    ok("sin ejemplo: el boton queda oculto", salir.hidden === true);
+    ok("sin ejemplo: hayEjemploCargado() es false", hayEjemploCargado() === false);
+
+    try { localStorage.setItem("gastamejor.ejemplo.v1", "1"); } catch (_) { /* nada */ }
+    actualizarBotonEjemplo();
+    ok("con ejemplo: el boton se muestra", salir.hidden === false);
+    ok("con ejemplo: hayEjemploCargado() es true", hayEjemploCargado() === true);
+
+    // Restaurar el estado previo.
+    try {
+      if (antes === null) localStorage.removeItem("gastamejor.ejemplo.v1");
+      else localStorage.setItem("gastamejor.ejemplo.v1", antes);
+    } catch (_) { /* nada */ }
+    actualizarBotonEjemplo();
+  });
+
   /* ---------- Resultado ---------- */
 
   restaurar();

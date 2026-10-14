@@ -145,13 +145,14 @@ Desde el resultado, el botón **📅 Guardar este mes** guarda (o actualiza) el 
 en curso con tu reparto actual. El historial queda guardado en el dispositivo,
 no viaja en el enlace compartible.
 
-## Imagen PNG
+## Guardar (imagen PNG)
 
-En "Mis datos" → **📸 Descargar imagen (PNG)** se descarga `gastamejor-reparto.png`:
-una tarjeta con tu reparto (torta con los mismos colores, % en el centro,
-ingreso y total, desglose por grupos con subtotales y avisos de exceso o "Sin
-designar") lista para compartir por WhatsApp o redes. Se genera con **canvas
-propio, sin librerías**, y funciona offline.
+En "Mis datos" → **💾 Guardar** se genera `gastamejor-reparto.png`: una tarjeta con
+tu reparto (torta con los mismos colores, % en el centro, ingreso y total, desglose
+por grupos con subtotales y avisos de exceso o "Sin designar") lista para compartir
+por WhatsApp o redes. En el celular, si tu cuenta tiene teléfono, se abre el **menú
+Compartir** para enviarla; si no (o en la compu), se **descarga**. Se genera con
+**canvas propio, sin librerías**, y funciona offline.
 
 ## Catálogo de categorías
 
@@ -164,12 +165,11 @@ auto, borras Combustible y usas Colectivo. ✕ sobre cada fila la elimina.
 > 💡 Desde el celular: puedes subir la carpeta a Netlify Drop o GitHub Pages y
 > abrir el enlace desde el navegador del teléfono (iPhone o Android).
 
-## Sincronizar entre dispositivos
+## Compartir tu reparto
 
-- **Enlace:** en "Mis datos" → "Enlace para otro dispositivo". Abre ese enlace
-  en otro equipo y pulsa **Aceptar** al aviso: se usa la misma distribución.
-- **Imagen PNG:** en "Mis datos" → "Descargar imagen (PNG)" bajas una imagen
-  con tu reparto lista para compartir o guardar.
+- **Imagen PNG:** en "Mis datos" → "💾 Guardar" generás una imagen con tu reparto.
+  En el celular, si tu cuenta tiene teléfono, se abre el menú para mandarla por
+  **WhatsApp**; si no (o en la compu), se descarga.
 
 Los datos se guardan en el dispositivo (localStorage). La capa `storage.js`
 está preparada para conectar a una sincronización real (API/cloud) sin
@@ -186,9 +186,9 @@ escrito *"Encontre un problema en GastaMejor: "* para que completes qué pasó.
 La **primera vez** que abrís la app (cuando todavía **no guardaste ningún mes**)
 arranca un **tutorial guiado** estilo juego: oscurece el fondo, **resalta un
 botón** y muestra un **globo** con para qué sirve y qué utilidad le podés sacar.
-Recorre **6 pasos**: escribir y repartir el dinero, la sección **Perfil y plan**
-de la barra de abajo, el plan de evolución, el consejero, la sección **Historial**
-y el botón de reportar.
+Recorre **7 pasos**: escribir y repartir el dinero, la sección **Perfil y plan**
+de la barra de abajo, el plan de evolución, el consejero, la sección **Historial**,
+el botón **💾 Guardar** (en Tus datos) y el botón de reportar.
 
 - Se navega con **Siguiente / Anterior**, o **Saltar**; también con las flechas
   **← →** y **Esc**.
@@ -218,13 +218,16 @@ La carpeta incluye tres páginas extra (**no forman parte de la app**: no tocan
 ### 🎓 `tutorial.html` — tutorial visual e interactivo
 
 - Explica **todos** los pasos: escribir el monto y la moneda, leer el resultado,
-  ajustar (% / $ y US$), perfiles, plan de evolución, Consejero, historial,
-  PNG y enlace.
+  ajustar (% / $ y US$), perfiles, plan de evolución, Consejero, historial y
+  Guardar (PNG).
 - Incluye **"La historia de Ana"**: un ejemplo de **12 meses** (2026) donde
   alguien pasa de **Gastador 60/30/10** a **Equilibrado 50/30/20**, con el
   ahorro creciendo, una tabla y un **mini-gráfico** de la evolución.
-- Botón **▶️ Probar con el ejemplo**: carga los 12 meses en el navegador y abre
-  la app (el botón vive solo acá; la app queda intacta).
+- Mientras mirás la historia, abajo aparece una **barra flotante** con
+  **▶️ Probar con el ejemplo** (carga los 12 meses en el navegador y abre la app;
+  el botón vive solo acá) y **Abrir la app**.
+- Si cargás el ejemplo, dentro de la **app** aparece un botón flotante
+  **✕ Salir del ejemplo** para borrarlo y volver al estado normal.
 
 ### 🧪 `pruebas.html` — pruebas a un clic (para chequear vos mismo)
 
@@ -248,8 +251,9 @@ powershell -ExecutionPolicy Bypass -File .\tests\correr-tests.ps1
 
 ### 🅰️ `datos-ejemplo.js` — los datos del ejemplo
 
-Define `EJEMPLO_PROGRESO` (12 meses), `EJEMPLO_CONFIG`, `cargarEjemplo()` y
-`borrarEjemplo()`. Lo comparten `tutorial.html` y `pruebas.html`.
+Define `EJEMPLO_PROGRESO` (12 meses), `EJEMPLO_CONFIG`, `cargarEjemplo()` (que
+además marca el ejemplo como cargado) y `borrarEjemplo()` (que lo limpia). Lo
+comparten `tutorial.html` y `pruebas.html`.
 
 ## Archivos
 

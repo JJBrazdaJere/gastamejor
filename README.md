@@ -25,14 +25,14 @@ Se publica automáticamente con **GitHub Pages** en cada push a `main`
   (regla 50/30/20 y otros perfiles).
 - Categorías en **porcentaje** o en **monto fijo** (los fijos se reservan primero).
 - Gráfico de torta hecho a mano (**SVG**) con leyenda, subtotales y "Sin designar".
-- **Exportar a PNG** y **generar link para compartir**.
+- **Guardar el reparto como imagen PNG** (para mandar por WhatsApp o descargar).
 - Ahorro en **dólares** con cotización en vivo (dólar Bolsa/MEP por defecto).
 - Paneles de **Perfiles, Plan, Historial y Consejero**.
 - **Ingresos diarios** 💵: si cobrás por día, cargás cada jornada y la app suma
   el mes (con **ingreso fijo mensual** opcional) y lo usa para el reparto.
 - **Cuentas de usuario** (opcional): registro con **email verificado**, login y
   teléfono opcional; se puede seguir usando la app como invitado.
-- **Tutorial interactivo**, **tour guiado** y **página de pruebas** (335 tests).
+- **Tutorial interactivo**, **tour guiado** y **página de pruebas** (366 tests).
 - **Responsive** (mobile-first desde 360px), en español y con formato ARS (`es-AR`).
 
 ## 🗂️ Estructura

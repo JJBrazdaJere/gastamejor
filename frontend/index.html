@@ -140,10 +140,9 @@
           <section data-pantalla="datos" class="pantalla" hidden>
             <div class="tarjeta">
               <h2 class="titulo-seccion">Tus datos</h2>
-              <p class="nota">Se guardan en este dispositivo. Llévalos a otro celular o PC descargando la imagen con tu reparto o compartiendo el enlace.</p>
+              <p class="nota">Se guardan en este dispositivo. Guardá tu reparto como imagen PNG para mandarlo por WhatsApp o llevarlo a otro celular o PC.</p>
               <div class="acciones-columna">
-                <button id="btn-exportar" class="btn-secundario">📸 Descargar imagen (PNG)</button>
-                <button id="btn-enlace" class="btn-secundario">🔗 Enlace para otro dispositivo</button>
+                <button id="btn-exportar" class="btn-secundario">💾 Guardar</button>
                 <button id="btn-tour" class="btn-secundario" type="button">🎓 Ver el tutorial guiado</button>
                 <a class="btn-secundario enlace-boton" href="tutorial.html">📖 Abrir el tutorial completo</a>
                 <a class="btn-secundario enlace-boton" href="cuenta.html">💵 Mis ingresos diarios y cuenta</a>
@@ -204,6 +203,12 @@
     <span class="btn-reportar-ico" aria-hidden="true">🐞</span>
     <span class="btn-reportar-txt">Reportar</span>
   </a>
+
+  <!-- Boton flotante: salir del ejemplo de Ana (solo si hay un ejemplo cargado) -->
+  <button id="btn-salir-ejemplo" class="btn-salir-ejemplo" type="button" hidden>
+    <span class="btn-salir-ejemplo-ico" aria-hidden="true">✕</span>
+    <span class="btn-salir-ejemplo-txt">Salir del ejemplo</span>
+  </button>
 
   <!-- Modal: catalogo de categorias -->
   <div id="modal-catalogo" class="modal" hidden>

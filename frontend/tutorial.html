@@ -57,6 +57,17 @@
   .aviso { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; border-radius: 12px; padding: 12px; font-size: .9rem; }
   .kbd { font-family: ui-monospace, Consolas, monospace; background: #eef2f7; border: 1px solid var(--linea); border-radius: 6px; padding: 1px 6px; font-size: .85em; }
   svg.mini { width: 100%; height: auto; display: block; }
+  .barra-historia {
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 50;
+    display: none; gap: 8px; flex-wrap: wrap; justify-content: center;
+    background: rgba(255,255,255,.97);
+    border: 1px solid var(--linea); border-radius: 18px; padding: 8px;
+    box-shadow: 0 10px 28px rgba(15,23,42,.18);
+    max-width: calc(100% - 20px);
+  }
+  .barra-historia.visible { display: flex; }
   footer { color: var(--gris); font-size: .85rem; text-align: center; margin-top: 30px; }
 </style>
 </head>
@@ -177,12 +188,12 @@
   <h2 id="p8"><span class="fila-paso"><span class="paso">8</span> Compartir y exportar</span></h2>
   <div class="tarjeta">
     <ul>
-      <li><strong>📸 Descargar imagen (PNG)</strong>: baja una tarjeta con tu reparto, ideal para mandar por WhatsApp.</li>
-      <li><strong>🔗 Enlace para otro dispositivo</strong>: genera un enlace que codifica tu configuración. Al abrirlo en otro celular o PC, la app ofrece usarla.</li>
+      <li><strong>💾 Guardar</strong>: genera una imagen PNG con tu reparto, ideal para mandar por WhatsApp. En el celular, si tu cuenta tiene teléfono, se abre el menú para enviarla; si no (o en la compu), se descarga.</li>
     </ul>
-    <p class="nota">Están en <strong>⚙️ Tus datos</strong> (pantalla de ingreso).</p>
+    <p class="nota">Está en <strong>⚙️ Tus datos</strong> (pantalla de ingreso).</p>
   </div>
 
+  <section id="historia-seccion">
   <h2 id="historia">🅰️ La historia de Ana (ejemplo de 12 meses)</h2>
   <div class="tarjeta">
     <p>Ana arranca en enero gastando mucho y ahorrando poco (<strong>Gastador 60/30/10</strong>) y, mes a mes, mejora su reparto hasta llegar a <strong>Equilibrado 50/30/20</strong> en diciembre. Su ingreso también sube con las paritarias. Esto es lo que vas a ver en el calendario del Historial:</p>
@@ -196,11 +207,7 @@
     <div id="mini-evolucion"></div>
     <p class="nota">La línea gris punteada marca el ideal del 20%.</p>
 
-    <div class="botones">
-      <button id="btn-probar" class="primario" type="button">▶️ Probar con el ejemplo</button>
-      <a class="btn" href="index.html">Abrir la app</a>
-      <button id="btn-borrar" type="button">🧹 Borrar ejemplo</button>
-    </div>
+    <p class="nota">Mientras mirás esta historia, abajo tenés siempre a mano <strong>▶️ Probar con el ejemplo</strong> para cargarla en la app, o <strong>Abrir la app</strong> para salir.</p>
     <p id="estado-msg" class="estado-msg" role="status"></p>
 
     <div class="aviso">
@@ -208,10 +215,17 @@
       <br>Importante: la app y este tutorial tienen que estar en el <strong>mismo origen</strong>. Lo más seguro es abrir el sitio publicado, o servirlo localmente con <span class="kbd">python -m http.server</span>. Con doble clic (<span class="kbd">file://</span>) algunos navegadores aíslan los datos.
     </div>
   </div>
+  </section>
 
   <footer>
     GastaMejor — prototipo local · <a href="pruebas.html">Ver las pruebas</a>
   </footer>
+</div>
+
+<!-- Barra flotante de la historia: siempre a mano para probar el ejemplo o abrir la app. -->
+<div id="barra-historia" class="barra-historia" role="group" aria-label="Acciones de la historia de Ana">
+  <button id="btn-probar" class="primario" type="button">▶️ Probar con el ejemplo</button>
+  <a class="btn" href="index.html">Abrir la app</a>
 </div>
 
 <script src="datos-ejemplo.js"></script>
@@ -280,10 +294,22 @@
     msg.textContent = "✅ Ejemplo cargado (" + n + " meses). Abriendo la app…";
     setTimeout(function () { window.location.href = "index.html"; }, 700);
   });
-  document.querySelector("#btn-borrar").addEventListener("click", function () {
-    if (typeof window.borrarEjemplo === "function") window.borrarEjemplo();
-    msg.textContent = "🧹 Ejemplo borrado de este navegador.";
-  });
+
+  /* Barra flotante: aparece mientras la "historia de Ana" está a la vista. */
+  var barra = document.querySelector("#barra-historia");
+  var seccion = document.querySelector("#historia-seccion");
+  if (barra) {
+    if (seccion && "IntersectionObserver" in window) {
+      var observador = new IntersectionObserver(function (entradas) {
+        entradas.forEach(function (e) {
+          barra.classList.toggle("visible", e.isIntersecting);
+        });
+      }, { rootMargin: "-15% 0px -15% 0px" });
+      observador.observe(seccion);
+    } else {
+      barra.classList.add("visible");
+    }
+  }
 })();
 </script>
 </body>

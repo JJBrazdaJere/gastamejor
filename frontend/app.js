@@ -1652,6 +1652,17 @@ function crearCanvasReparto() {
   return canvas;
 }
 
+function descargarBlob(blob, nombre) {
+  const url = URL.createObjectURL(blob);
+  const enlace = document.createElement("a");
+  enlace.href = url;
+  enlace.download = nombre || "gastamejor-reparto.png";
+  document.body.appendChild(enlace);
+  enlace.click();
+  document.body.removeChild(enlace);
+  setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+}
+
 function descargarImagenReparto() {
   const canvas = crearCanvasReparto();
   canvas.toBlob(function (blob) {
@@ -1659,16 +1670,102 @@ function descargarImagenReparto() {
       toast("No se pudo generar la imagen.");
       return;
     }
-    const url = URL.createObjectURL(blob);
-    const enlace = document.createElement("a");
-    enlace.href = url;
-    enlace.download = "gastamejor-reparto.png";
-    document.body.appendChild(enlace);
-    enlace.click();
-    document.body.removeChild(enlace);
-    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    descargarBlob(blob, "gastamejor-reparto.png");
     toast("Imagen descargada ⬇");
   }, "image/png");
+}
+
+/* "Guardar": genera el PNG y trata de compartirlo.
+   - Si hay una cuenta con telefono y el equipo soporta compartir archivos,
+     abre el menu del celular (WhatsApp) con la imagen adjunta.
+   - Si no (sin sesion, sin telefono o equipo sin soporte), descarga el PNG. */
+function guardarImagenReparto() {
+  const canvas = crearCanvasReparto();
+  canvas.toBlob(function (blob) {
+    if (!blob) {
+      toast("No se pudo generar la imagen.");
+      return;
+    }
+    compartirODescargarImagen(blob);
+  }, "image/png");
+}
+
+async function compartirODescargarImagen(blob) {
+  let archivo = null;
+  let puedeCompartir = false;
+  if (
+    typeof navigator !== "undefined" &&
+    typeof navigator.canShare === "function" &&
+    typeof File === "function"
+  ) {
+    try {
+      archivo = new File([blob], "gastamejor-reparto.png", { type: "image/png" });
+      puedeCompartir = navigator.canShare({ files: [archivo] });
+    } catch (_) {
+      puedeCompartir = false;
+    }
+  }
+
+  const telefono = puedeCompartir ? await telefonoDeLaCuenta() : "";
+
+  if (!puedeCompartir || !telefono) {
+    descargarBlob(blob, "gastamejor-reparto.png");
+    toast("Imagen descargada ⬇");
+    return;
+  }
+
+  try {
+    await navigator.share({
+      files: [archivo],
+      title: "GastaMejor — mi reparto",
+      text: "Mi reparto de gastos en GastaMejor",
+    });
+    toast("Listo para compartir ✔");
+  } catch (_) {
+    /* el usuario cancelo el menu: no descargamos nada */
+  }
+}
+
+/* Telefono de la cuenta logueada (o "" si no hay sesion / no cargo telefono). */
+async function telefonoDeLaCuenta() {
+  try {
+    if (typeof API !== "undefined" && API.hayToken && API.hayToken()) {
+      const datos = await API.perfil();
+      return (datos && datos.cliente && datos.cliente.telefono) || "";
+    }
+  } catch (_) {
+    /* backend dormido o sin sesion valida: tratamos como sin telefono */
+  }
+  return "";
+}
+
+/* ---------- Ejemplo de Ana: entrar / salir ---------- */
+
+function hayEjemploCargado() {
+  try {
+    return localStorage.getItem(CLAVE_EJEMPLO) === "1";
+  } catch (_) {
+    return false;
+  }
+}
+
+/* Muestra u oculta el boton flotante "Salir del ejemplo". */
+function actualizarBotonEjemplo() {
+  const boton = $("#btn-salir-ejemplo");
+  if (boton) boton.hidden = !hayEjemploCargado();
+}
+
+/* Borra el ejemplo cargado y recarga la app (vuelve al estado normal). */
+function salirDelEjemplo() {
+  try {
+    localStorage.removeItem(CLAVE_EJEMPLO);
+    localStorage.removeItem(CLAVE_HISTORIAL);
+    localStorage.removeItem(CLAVE_CONFIG);
+    localStorage.removeItem(CLAVE_COTIZACION);
+  } catch (_) {
+    /* sin persistencia */
+  }
+  location.reload();
 }
 
 /* ---------- Pantalla 3: ajustar ---------- */
@@ -2215,9 +2312,11 @@ function iniciarEventos() {
     toast("Moneda actualizada ✔");
   });
   $("#btn-exportar").addEventListener("click", function () {
-    descargarImagenReparto();
+    guardarImagenReparto();
   });
-  $("#btn-enlace").addEventListener("click", abrirModalEnlace);
+
+  const btnSalirEjemplo = $("#btn-salir-ejemplo");
+  if (btnSalirEjemplo) btnSalirEjemplo.addEventListener("click", salirDelEjemplo);
 
   // Cotización del dólar (para el ahorro en USD)
   $("#dolar-tipo").addEventListener("change", function (e) {
@@ -2311,6 +2410,11 @@ const PASOS_TOUR = [
     sel: '.tabbar-btn[data-tab="historial"]', selAlt: "#hist-calendario", tab: "historial",
     titulo: "Sección «Historial»",
     texto: "Con este botón de abajo ves los meses que guardaste y cómo evoluciona tu ahorro.",
+  },
+  {
+    sel: "#btn-exportar", pantalla: "datos",
+    titulo: "Guardá y compartí tu reparto",
+    texto: "Tocá «Guardar» para bajar o mandar tu reparto en una imagen PNG. En el celular, se abre el menú para enviarla por WhatsApp (si tu cuenta tiene teléfono).",
   },
   {
     sel: "#btn-reportar",
@@ -2480,6 +2584,7 @@ function init() {
   construirSelectMoneda();
   actualizarSimboloMonto();
   iniciarEventos();
+  actualizarBotonEjemplo();
   iniciarCotizacion();
   renderHistorial();
   mostrarPantalla("ingreso");

@@ -18,6 +18,7 @@
     config: "gastamejor.config.v1",
     cotizacion: "gastamejor.cotizacion.v1",
     historial: "gastamejor.historial.v1",
+    ejemplo: "gastamejor.ejemplo.v1",
   };
 
   function redondear2(n) {
@@ -124,6 +125,7 @@
     try {
       localStorage.setItem(CLAVES.historial, JSON.stringify(PROGRESO));
       localStorage.setItem(CLAVES.config, JSON.stringify(CONFIG));
+      localStorage.setItem(CLAVES.ejemplo, "1");
       localStorage.setItem(
         CLAVES.cotizacion,
         JSON.stringify({ bolsa: { valor: 1250, fecha: new Date().toISOString(), fuente: "manual" } })

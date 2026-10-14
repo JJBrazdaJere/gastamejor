@@ -858,6 +858,45 @@ body:has(.modal:not([hidden])) .btn-reportar { display: none; }
   .btn-reportar { bottom: 22px; right: 22px; }
 }
 
+/* ---------- Boton flotante: salir del ejemplo de Ana ---------- */
+.btn-salir-ejemplo {
+  position: fixed;
+  left: 16px;
+  bottom: calc(82px + env(safe-area-inset-bottom));
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #b45309;
+  color: #ffffff;
+  border: 0;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 12px 16px;
+  min-height: 48px;
+  border-radius: 999px;
+  box-shadow: var(--sombra);
+  cursor: pointer;
+  z-index: 9;
+}
+.btn-salir-ejemplo[hidden] { display: none; }
+.btn-salir-ejemplo:hover { filter: brightness(0.95); }
+.btn-salir-ejemplo-ico { font-size: 16px; line-height: 1; }
+
+@media (max-width: 560px) {
+  .btn-salir-ejemplo {
+    padding: 0;
+    width: 52px;
+    height: 52px;
+    justify-content: center;
+  }
+  .btn-salir-ejemplo-txt { display: none; }
+}
+
+@media (min-width: 900px) {
+  .btn-salir-ejemplo { bottom: 22px; left: 22px; }
+}
+
 /* ---------- Tour guiado de primera vez ---------- */
 .tour {
   position: fixed;
