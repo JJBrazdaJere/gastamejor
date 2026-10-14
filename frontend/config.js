@@ -14,7 +14,7 @@
 (function () {
   // 👉 Pegá acá la URL del backend publicado (sin barra final).
   //    Ejemplo: "https://gastamejor-api.onrender.com"
-  var URL_BACKEND = "";
+  var URL_BACKEND = "https://gastamejor-api.onrender.com";
 
   if (URL_BACKEND) {
     window.GASTAMEJOR_API = String(URL_BACKEND).replace(/\/+$/, "");
