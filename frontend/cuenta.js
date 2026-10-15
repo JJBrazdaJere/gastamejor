@@ -121,6 +121,25 @@ function diaDeHoy() {
   );
 }
 
+/* Arma "AAAA-MM-DD" para el mes indicado ("AAAA-MM"), con el dia limitado
+   al ultimo dia real de ese mes (ej: 31 de febrero -> 28/29). */
+function fechaEnMes(mes, dia) {
+  const partes = String(mes).split("-");
+  const anio = Number(partes[0]);
+  const nMes = Number(partes[1]);
+  if (!anio || !nMes) return diaDeHoy();
+  const ultimoDia = new Date(anio, nMes, 0).getDate(); // dia 0 del mes siguiente
+  const d = Math.min(Math.max(1, Number(dia) || 1), ultimoDia);
+  return partes[0] + "-" + String(nMes).padStart(2, "0") + "-" + String(d).padStart(2, "0");
+}
+
+/* Mueve el campo Fecha al mes indicado, conservando el dia (con tope). */
+function sincronizarFechaConMes(mes) {
+  const actual = $("#ing-fecha").value || diaDeHoy();
+  const dia = Number(actual.slice(8, 10)) || 1;
+  $("#ing-fecha").value = fechaEnMes(mes, dia);
+}
+
 function mostrarVista(nombre) {
   $("#vista-cargando").hidden = nombre !== "cargando";
   $("#vista-auth").hidden = nombre !== "auth";
@@ -292,7 +311,11 @@ function pintarLista() {
 async function agregarIngreso() {
   mostrarError("#error-ingreso", "");
   const monto = montoParaApi($("#ing-monto").value);
-  const fecha = $("#ing-fecha").value || diaDeHoy();
+  // El mes lo manda el selector "Mes" (el que se ve en "Resumen del mes");
+  // de la Fecha solo tomamos el dia. Asi la carga cae siempre en el mes
+  // elegido abajo (no en el mes de hoy).
+  const dia = ($("#ing-fecha").value || diaDeHoy()).slice(8, 10);
+  const fecha = fechaEnMes(estadoCuenta.mes, dia);
   const descripcion = $("#ing-desc").value.trim();
 
   if (!monto || Number(monto) <= 0) {
@@ -304,7 +327,7 @@ async function agregarIngreso() {
     await API.agregarIngreso({ monto: monto, fecha: fecha, descripcion: descripcion || null });
     $("#ing-monto").value = "";
     $("#ing-desc").value = "";
-    // Si el ingreso es de otro mes, nos movemos a ese mes para verlo.
+    // Nos aseguramos de quedar mostrando el mes del ingreso.
     const mesDelIngreso = fecha.slice(0, 7);
     await cargarMes(mesDelIngreso);
     toast("Ingreso agregado ✔");
@@ -576,8 +599,19 @@ function conectarEventos() {
   $("#btn-agregar-ingreso").addEventListener("click", agregarIngreso);
   $("#btn-guardar-perfil").addEventListener("click", guardarPerfil);
   $("#btn-usar").addEventListener("click", usarTotal);
+
+  // El selector "Mes" (Resumen del mes) manda: al cambiarlo, movemos la
+  // Fecha a ese mes para que la proxima carga caiga ahi.
   $("#mes").addEventListener("change", function () {
-    cargarMes(this.value || mesDeHoy());
+    const mesElegido = this.value || mesDeHoy();
+    sincronizarFechaConMes(mesElegido);
+    cargarMes(mesElegido);
+  });
+
+  // Y al reves: si cambias la Fecha, mostramos el resumen de ese mes.
+  $("#ing-fecha").addEventListener("change", function () {
+    const mes = (this.value || diaDeHoy()).slice(0, 7);
+    cargarMes(mes);
   });
 
   $("#lista-ingresos").addEventListener("click", function (e) {

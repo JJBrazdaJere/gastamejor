@@ -1531,6 +1531,16 @@ a.btn-atras {
   background: var(--tarjeta);
 }
 
+/* Los campos nativos de fecha y mes traen un ancho minimo propio del
+   navegador (el texto + el iconito del calendario) y no se achican solos:
+   los dejamos encogerse para que no se pisen ni se salgan del recuadro. */
+.campo-texto[type="date"],
+.campo-texto[type="month"] {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
 /* Pestañas internas (iniciar sesion / crear cuenta) */
 .subtabs {
   display: flex;
@@ -1567,6 +1577,13 @@ a.btn-atras {
 .campo-linea > * { flex: 1 1 130px; min-width: 0; }
 .campo-linea .etiqueta { margin-top: 0; }
 .campo-linea .campo-texto { margin-bottom: 0; }
+
+/* En pantallas chicas, Fecha y Monto van uno arriba del otro: asi la Fecha
+   tiene toda la fila y no se monta encima del Monto. */
+@media (max-width: 400px) {
+  .campo-linea { flex-direction: column; align-items: stretch; }
+  .campo-linea > * { flex: 1 1 auto; }
+}
 
 /* Avisos verdes (exito / modo prueba) */
 .aviso-ok {
