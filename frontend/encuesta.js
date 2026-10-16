@@ -152,25 +152,20 @@ function syncGastosFromDOM() {
   const cont = el("enc-gastos");
   if (!cont) return;
   const filas = cont.querySelectorAll(".encuesta-categoria");
-  const nuevos = [];
   filas.forEach(function (fila) {
     const idx = parseInt(fila.dataset.idx, 10);
-    if (isNaN(idx)) return;
-    const g = encuesta.gastos[idx] || { id: "gasto-sync", nombre: "", grupo: "necesidad", monto: 0 };
+    if (isNaN(idx) || !encuesta.gastos || idx < 0 || idx >= encuesta.gastos.length) return;
+    const g = encuesta.gastos[idx];
     const inputMonto = fila.querySelector('[data-gasto-idx="' + idx + '"]');
     const inputNombre = fila.querySelector('[data-nombre-idx="' + idx + '"]');
     const selectGrupo = fila.querySelector('[data-grupo-idx="' + idx + '"]');
     const texto = inputMonto ? inputMonto.value : "";
     const n = parsearEntradaMonto(texto);
     const monto = tieneSignoNegativo(texto) || n === null ? 0 : Math.max(0, n);
-    nuevos.push({
-      id: g.id || ("gasto-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6)),
-      nombre: inputNombre && inputNombre.value ? inputNombre.value : (g.nombre || ""),
-      grupo: selectGrupo && selectGrupo.value ? selectGrupo.value : (g.grupo || "necesidad"),
-      monto: monto,
-    });
+    g.nombre = inputNombre && inputNombre.value ? inputNombre.value : (g.nombre || "");
+    g.grupo = selectGrupo && selectGrupo.value ? selectGrupo.value : (g.grupo || "necesidad");
+    g.monto = monto;
   });
-  encuesta.gastos = nuevos;
 }
 
 /* Crea una única fila de gasto y la devuelve. No toca el resto del DOM. */
@@ -178,6 +173,9 @@ function renderFilaGasto(idx, gasto) {
   const fila = document.createElement("div");
   fila.className = "encuesta-categoria";
   fila.dataset.idx = String(idx);
+  const montoValor = (gasto.monto !== undefined && gasto.monto !== null && !isNaN(gasto.monto) && gasto.monto > 0)
+    ? formatearNumeroMonto(gasto.monto, 2)
+    : "";
   fila.innerHTML =
     '<div class="encuesta-categoria-linea">' +
       '<input class="encuesta-gasto-nombre" type="text" data-nombre-idx="' + idx + '" value="' + esc(gasto.nombre || "") + '" placeholder="Nombre de categoría">' +
@@ -191,7 +189,7 @@ function renderFilaGasto(idx, gasto) {
       '<div class="campo-monto campo-monto-chico">' +
         '<span class="simbolo simbolo-chico" aria-hidden="true">$</span>' +
         '<input id="enc-gasto-' + idx + '" class="input-monto-chico" data-gasto-idx="' + idx +
-        '" type="text" inputmode="decimal" placeholder="0,00" autocomplete="off" aria-label="' + esc(gasto.nombre || "") + '">' +
+        '" type="text" inputmode="decimal" placeholder="0,00" autocomplete="off" aria-label="' + esc(gasto.nombre || "") + '" value="' + esc(montoValor) + '">' +
       '</div>' +
       '<button class="btn-eliminar-categoria" type="button" data-elim-idx="' + idx + '">🗑️ Eliminar</button>' +
     '</div>';
@@ -453,6 +451,10 @@ function leerPasoActual() {
 /* ---------- Navegacion ---------- */
 
 function irSiguiente() {
+  const pasoActualNombre = pasoActual();
+  if (pasoActualNombre === "gastos") {
+    syncGastosFromDOM();
+  }
   const paso = leerPasoActual();
   const v = validarPaso(paso);
   if (!v.ok) {
@@ -470,6 +472,10 @@ function irSiguiente() {
 }
 
 function irAnterior() {
+  const pasoActualNombre = pasoActual();
+  if (pasoActualNombre === "gastos") {
+    syncGastosFromDOM();
+  }
   leerPasoActual();
   limpiarErrores();
   encuesta.paso = Math.max(0, encuesta.paso - 1);
@@ -493,7 +499,7 @@ function mostrarPaso() {
   if (barra) barra.style.width = (((encuesta.paso + 1) / pasos.length) * 100).toFixed(1) + "%";
 
   if (paso === "gastos") {
-    // Al entrar al paso, sincronizar valores desde DOM y renderizar lista incremental
+    // Al entrar al paso, sincronizar valores desde DOM y renderizar lista
     syncGastosFromDOM();
     renderGastosLista();
     refrescarResumenGastos();
@@ -1064,8 +1070,8 @@ function iniciarEventosEncuesta() {
         const idx = parseInt(e.target.dataset.grupoIdx, 10);
         if (!isNaN(idx)) {
           syncGastosFromDOM();
+          // Ya sincronizados los valores, actualizamos el grupo y reagrupamos.
           if (encuesta.gastos[idx]) encuesta.gastos[idx].grupo = e.target.value;
-          // Re-renderizar lista para reagrupar por grupo sin perder valores
           renderGastosLista();
           refrescarResumenGastos();
         }
