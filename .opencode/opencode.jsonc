@@ -6,6 +6,25 @@
   // Agente que se usa al abrir una sesion nueva en este proyecto.
   "default_agent": "orquestador",
 
+  // Servidor MCP: navegador Playwright (reusa Edge) para ver los tests
+  // en el navegador (abrir pruebas.html, correr y sacar screenshot).
+  "mcp": {
+    "servers": {
+      "playwright": {
+        "type": "local",
+        // Rutas absolutas a Node y al paquete global @playwright/mcp.
+        // Evita depender del PATH del servicio de OpenCode (que arranco
+        // antes de instalar Node) y es estable entre reinicios.
+        "command": [
+          "C:\\Program Files\\nodejs\\node.exe",
+          "C:\\Users\\Usuario\\AppData\\Roaming\\npm\\node_modules\\@playwright\\mcp\\cli.js",
+          "--browser",
+          "msedge"
+        ]
+      }
+    }
+  },
+
   // Atajo para arrancar de cero. Escribe /iniciar-app en el chat.
   "commands": {
     "iniciar-app": {
