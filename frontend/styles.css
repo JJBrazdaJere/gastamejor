@@ -92,16 +92,37 @@ body {
 }
 
 .btn-atras {
-  width: var(--tactil);
-  height: var(--tactil);
-  border: none;
-  border-radius: 50%;
-  background: var(--tarjeta);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tactil);
+  min-width: var(--tactil);
+  width: auto;
+  height: auto;
+  padding: 0 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--borde, var(--border));
+  background: var(--superficie, var(--tarjeta));
   box-shadow: var(--sombra);
-  font-size: 20px;
+  font-size: 16px;
   cursor: pointer;
   color: var(--texto);
+  text-decoration: none;
   flex: none;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease, outline-color 0.15s ease;
+}
+
+.btn-atras:hover {
+  background: color-mix(in srgb, var(--superficie, var(--tarjeta)) 90%, black 10%);
+}
+
+.btn-atras:active {
+  transform: translateY(1px);
+}
+
+.btn-atras:focus-visible {
+  outline: 3px solid var(--anillo, var(--ring));
+  outline-offset: 2px;
 }
 
 /* ---------- Botón de sesión (siempre visible, arriba a la derecha) ---------- */
@@ -807,14 +828,34 @@ body {
 }
 
 .pie-enlace {
-  border: none;
-  background: none;
-  color: var(--primario-oscuro);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: var(--tactil);
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--radio, var(--radio-chico));
+  border: 1px solid var(--borde, var(--border));
+  background: transparent;
+  color: var(--primario, var(--primary));
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  min-height: 36px;
-  padding: 0 4px;
+  text-decoration: none;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease, outline-color 0.15s ease;
+}
+
+.pie-enlace:hover {
+  background: color-mix(in srgb, var(--primario, var(--primary)) 8%, transparent);
+}
+
+.pie-enlace:active {
+  transform: translateY(1px);
+}
+
+.pie-enlace:focus-visible {
+  outline: 3px solid var(--anillo, var(--ring));
+  outline-offset: 2px;
 }
 
 .pie-punto { opacity: 0.5; }
