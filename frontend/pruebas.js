@@ -883,6 +883,261 @@
     mostrarPantalla("ingreso");
   });
 
+  /* ============================================================
+     Suites del motor puro, la encuesta y el portero
+     ============================================================ */
+
+  correr("Motor puro", function () {
+    // El motor NO lee el estado global: la cotizacion es un 3er argumento
+    // explicito. Con estado.cotizacion = 1000 (lo fija resetEstado), una
+    // categoria de ahorro en USD debe valer 0 si no le pasamos la cotizacion.
+    var cfg = configVacia();
+    var idxAhorro = -1;
+    cfg.categorias.forEach(function (c, i) {
+      if (c.id === "ahorro") idxAhorro = i;
+    });
+    cfg.categorias[idxAhorro].modo = "fijo";
+    cfg.categorias[idxAhorro].porcentaje = 0;
+    cfg.categorias[idxAhorro].monto = 100;
+    cfg.categorias[idxAhorro].monedaMonto = "USD";
+
+    // Dejamos a proposito una cotizacion en el estado global: el motor igual
+    // no debe leerla.
+    estado.cotizacion = { tipo: "bolsa", valor: 1000, fecha: null, fuente: "manual", estado: "manual" };
+    ok("el estado global tiene cotizacion (para probar que NO se usa)",
+      estado.cotizacion && estado.cotizacion.valor === 1000);
+    var sinCot = calcularReparto(cfg, 100000);
+    igual("calcularReparto sin cotizacion: la categoria USD vale 0", sinCot.montoCategoria[idxAhorro], 0);
+
+    var conCot = calcularReparto(cfg, 100000, { tipo: "bolsa", valor: 900 });
+    igual("calcularReparto con cotizacion explicita: 100 US$ -> 90.000", conCot.montoCategoria[idxAhorro], 90000);
+
+    igual("tasaDeCotizacion(undefined) es 0", tasaDeCotizacion(undefined), 0);
+    igual("tasaDeCotizacion(null) es 0", tasaDeCotizacion(null), 0);
+    igual("tasaDeCotizacion({valor:1500}) es 1500", tasaDeCotizacion({ valor: 1500 }), 1500);
+
+    // fijosPorGrupo tambien respeta la cotizacion explicita.
+    casi("fijosPorGrupo: ahorro en USD sin cotizacion vale 0", fijosPorGrupo(cfg, null).ahorro, 0);
+    casi("fijosPorGrupo: ahorro en USD con cotizacion 900 vale 90.000",
+      fijosPorGrupo(cfg, { tipo: "bolsa", valor: 900 }).ahorro, 90000);
+
+    // repartirPesosGrupo: reparte el objetivo entre los % de cada grupo.
+    var repartida = repartirPesosGrupo(configVacia(), { necesidad: 60, deseo: 30, ahorro: 10 });
+    var porId = {};
+    repartida.categorias.forEach(function (c) { porId[c.id] = Number(c.porcentaje); });
+    casi("repartirPesosGrupo: vivienda 30", porId.vivienda, 30);
+    casi("repartirPesosGrupo: comida 18", porId.comida, 18);
+    casi("repartirPesosGrupo: transporte 12", porId.transporte, 12);
+    casi("repartirPesosGrupo: ocio 15", porId.ocio, 15);
+    casi("repartirPesosGrupo: compras 15", porId.compras, 15);
+    casi("repartirPesosGrupo: ahorro 7.5", porId.ahorro, 7.5);
+    casi("repartirPesosGrupo: emergencia 2.5", porId.emergencia, 2.5);
+    casi("repartirPesosGrupo: la suma sigue siendo 100",
+      sumaPorcentajes(repartida), 100);
+
+    // repartirObjetivoReal: sobre el ingreso, contando los fijos.
+    var cfgReal = configVacia();
+    repartirObjetivoReal(cfgReal, { necesidad: 50, deseo: 30, ahorro: 20 }, 100000, null);
+    casi("repartirObjetivoReal: los % nominales siguen sumando 100", sumaPorcentajes(cfgReal), 100);
+
+    // repartirSobrante es PURO: no muta la config original.
+    var base = configVacia();
+    var cantidadAntes = base.categorias.length;
+    var res = repartirSobrante(base, 5000, { tipo: "ahorrar" });
+    ok("repartirSobrante: la config original no cambia",
+      base.categorias.length === cantidadAntes &&
+      base.categorias.every(function (c) { return Number(c.monto) === 0; }));
+    ok("repartirSobrante: devuelve una config nueva (clonada)", res.cfg !== base);
+    igual("repartirSobrante: monto 5000 al grupo ahorro", res.grupo, "ahorro");
+    igual("repartirSobrante: monto devuelto", res.monto, 5000);
+    ok("repartirSobrante: hay una categoria con los 5000",
+      res.cfg.categorias.some(function (c) { return Number(c.monto) === 5000; }));
+
+    var clon = clonarConfig(base);
+    ok("clonarConfig: el clon no es el mismo objeto", clon !== base);
+    ok("clonarConfig: las categorias son copias",
+      clon.categorias[0] !== base.categorias[0] && clon.categorias.length === base.categorias.length);
+
+    // Registro del historial (nucleo puro).
+    var registro = construirRegistroHistorial(configVacia(), 100000, "2026-01", null);
+    igual("construirRegistroHistorial: mes", registro.mes, "2026-01");
+    igual("construirRegistroHistorial: moneda", registro.moneda, "ARS");
+    igual("construirRegistroHistorial: monto", registro.monto, 100000);
+    igual("construirRegistroHistorial: categorias", registro.categorias.length, configVacia().categorias.length);
+    casi("construirRegistroHistorial: ahorro 20% del ingreso", registro.pctGrupos.ahorro, 20);
+    ok("construirRegistroHistorial: trae un perfil",
+      typeof registro.perfil === "string" && registro.perfil.length > 0, String(registro.perfil));
+  });
+
+  correr("Encuesta", function () {
+    // Metas
+    ok("METAS tiene las 7 metas esperadas", METAS.length === 7, String(METAS.length));
+    ok("cada meta tiene tipo, etiqueta y emoji",
+      METAS.every(function (m) {
+        return typeof m.tipo === "string" && typeof m.etiqueta === "string" && typeof m.emoji === "string";
+      }));
+    igual("metaPorTipo: encuentra una meta", metaPorTipo("vacaciones").etiqueta, "Vacaciones");
+    igual("metaPorTipo: tipo desconocido es null", metaPorTipo("nope"), null);
+    igual("grupoSobranteParaMeta: deudas -> necesidad", grupoSobranteParaMeta("deudas"), "necesidad");
+    igual("grupoSobranteParaMeta: ahorrar -> ahorro", grupoSobranteParaMeta("ahorrar"), "ahorro");
+    igual("grupoSobranteParaMeta: tipo raro -> ahorro", grupoSobranteParaMeta("nope"), "ahorro");
+
+    // Nunca sugerimos "gastador" como objetivo.
+    igual("perfilObjetivoParaMeta: vacaciones -> conservador", perfilObjetivoParaMeta("vacaciones"), "conservador");
+    igual("perfilObjetivoParaMeta: ahorrar -> cauto", perfilObjetivoParaMeta("ahorrar"), "cauto");
+    igual("perfilObjetivoParaMeta: deudas -> equilibrado", perfilObjetivoParaMeta("deudas"), "equilibrado");
+    ok("perfilObjetivoParaMeta: nunca devuelve gastador",
+      METAS.every(function (m) { return perfilObjetivoParaMeta(m.tipo) !== "gastador"; }));
+
+    // Sobrante y plazo
+    igual("sobranteDe: 1000 - 400 = 600", sobranteDe(1000, 400), 600);
+    igual("sobranteDe: sin gastos es el ingreso", sobranteDe(1000, 0), 1000);
+    igual("mesesParaMeta: 1000 / 200 = 5", mesesParaMeta(1000, 200), 5);
+    igual("mesesParaMeta: redondea hacia arriba (1000/300=4)", mesesParaMeta(1000, 300), 4);
+    igual("mesesParaMeta: sin aporte es null", mesesParaMeta(1000, 0), null);
+    igual("mesesParaMeta: objetivo 0 es 0", mesesParaMeta(0, 500), 0);
+
+    // Validaciones (todas devuelven { ok, error }).
+    ok("validarNombre: vacio falla", validarNombre("").ok === false);
+    ok("validarNombre: con espacios falla", validarNombre("   ").ok === false);
+    ok("validarNombre: con texto pasa", validarNombre("Ana").ok === true);
+    ok("validarNombre: trae mensaje de error",
+      typeof validarNombre("").error === "string" && validarNombre("").error.length > 0);
+
+    ok("validarIngreso: 0 falla", validarIngreso(0, "ARS").ok === false);
+    ok("validarIngreso: negativo falla", validarIngreso(-5, "ARS").ok === false);
+    ok("validarIngreso: vacio falla", validarIngreso("", "ARS").ok === false);
+    ok("validarIngreso: 100000 pasa", validarIngreso(100000, "ARS").ok === true);
+    ok("validarIngreso: moneda invalida falla", validarIngreso(1000, "XXX").ok === false);
+
+    ok("validarGastos: lista vacia falla", validarGastos([]).ok === false);
+    ok("validarGastos: no es lista falla", validarGastos(null).ok === false);
+    ok("validarGastos: todos en cero falla",
+      validarGastos([{ monto: 0 }, { monto: 0 }]).ok === false);
+    ok("validarGastos: monto negativo falla", validarGastos([{ monto: -1 }]).ok === false);
+    ok("validarGastos: un monto mayor a cero pasa", validarGastos([{ monto: 0 }, { monto: 100 }]).ok === true);
+
+    ok("validarMeta: null falla", validarMeta(null).ok === false);
+    ok("validarMeta: tipo desconocido falla", validarMeta({ tipo: "nope", monto: 100, meses: 6 }).ok === false);
+    ok("validarMeta: meses 0 falla", validarMeta({ tipo: "ahorrar", monto: 100, meses: 0 }).ok === false);
+    ok("validarMeta: meses decimal falla", validarMeta({ tipo: "ahorrar", monto: 100, meses: 2.5 }).ok === false);
+    ok("validarMeta: monto negativo falla", validarMeta({ tipo: "ahorrar", monto: -1, meses: 6 }).ok === false);
+    ok("validarMeta: completa pasa", validarMeta({ tipo: "vacaciones", monto: 120000, meses: 12 }).ok === true);
+
+    // Configuracion desde la encuesta.
+    var datos = {
+      nombre: "Ana",
+      ingreso: 100000,
+      moneda: "ARS",
+      gastos: [
+        { id: "vivienda", nombre: "Vivienda / alquiler", grupo: "necesidad", monto: 40000 },
+        { id: "comida", nombre: "Comida y super", grupo: "necesidad", monto: 20000 },
+        { id: "ocio", nombre: "Ocio y planes", grupo: "deseo", monto: 15000 },
+      ],
+      meta: { tipo: "vacaciones", monto: 120000, meses: 12 },
+    };
+    var cfgEnc = construirConfigDesdeEncuesta(datos);
+    ok("construirConfigDesdeEncuesta: es una config valida", validarConfig(cfgEnc) === true);
+    igual("construirConfigDesdeEncuesta: objetivo segun la meta", cfgEnc.objetivo, "conservador");
+    ok("construirConfigDesdeEncuesta: todas las categorias son fijas",
+      cfgEnc.categorias.every(function (c) { return c.modo === "fijo"; }));
+    ok("construirConfigDesdeEncuesta: aparece el ahorro con el sobrante",
+      cfgEnc.categorias.some(function (c) { return (c.grupo === "ahorro") && Number(c.monto) === 25000; }));
+    igual("construirConfigDesdeEncuesta: moneda", cfgEnc.moneda, "ARS");
+    ok("construirConfigDesdeEncuesta: no depende del estado global", cfgEnc.planBase === null);
+
+    var previa = vistaPreviaEncuesta(datos, null);
+    igual("vistaPreviaEncuesta: total de gastos", previa.totalGastos, 75000);
+    igual("vistaPreviaEncuesta: sobrante", previa.sobrante, 25000);
+    igual("vistaPreviaEncuesta: grupo del sobrante", previa.grupoSobrante, "ahorro");
+    casi("vistaPreviaEncuesta: meses estimados (120000/25000)", previa.meses, 5);
+    ok("vistaPreviaEncuesta: trae consejos", Array.isArray(previa.consejos) && previa.consejos.length > 0,
+      String(previa.consejos && previa.consejos.length));
+    ok("vistaPreviaEncuesta: trae el perfil objetivo",
+      !!previa.perfilObjetivo && previa.perfilObjetivo.id === "conservador");
+    ok("vistaPreviaEncuesta: trae la config",
+      !!previa.cfg && validarConfig(previa.cfg) === true);
+
+    // Sin sobrante: no hay grupo de sobrante ni meses.
+    var previaSin = vistaPreviaEncuesta({
+      ingreso: 50000, moneda: "ARS",
+      gastos: [{ id: "vivienda", nombre: "Vivienda", grupo: "necesidad", monto: 50000 }],
+      meta: { tipo: "ahorrar", monto: 100000, meses: 6 },
+    }, null);
+    igual("vistaPreviaEncuesta: sin sobrante no hay grupo destino", previaSin.grupoSobrante, null);
+    igual("vistaPreviaEncuesta: sin sobrante no hay meses estimados", previaSin.meses, null);
+    ok("vistaPreviaEncuesta: sin sobrante igual hay consejos", previaSin.consejos.length > 0);
+
+    // perfilEfectivoEncuesta (fuente unica de verdad).
+    igual("perfilEfectivoEncuesta: no tocado + ahorrar -> cauto", perfilEfectivoEncuesta(false, "equilibrado", "ahorrar"), "cauto");
+    igual("perfilEfectivoEncuesta: no tocado + vacaciones -> conservador", perfilEfectivoEncuesta(false, "equilibrado", "vacaciones"), "conservador");
+    igual("perfilEfectivoEncuesta: no tocado + meta desconocida cae al mapeo", perfilEfectivoEncuesta(false, "equilibrado", "nope"), "equilibrado");
+    igual("perfilEfectivoEncuesta: tocado Equilibrado + ahorrar gana", perfilEfectivoEncuesta(true, "equilibrado", "ahorrar"), "equilibrado");
+    igual("perfilEfectivoEncuesta: tocado Cauto + vacaciones gana", perfilEfectivoEncuesta(true, "cauto", "vacaciones"), "cauto");
+    igual("perfilEfectivoEncuesta: tocado Gastador nunca devuelve gastador", perfilEfectivoEncuesta(true, "gastador", "ahorrar"), "cauto");
+    igual("perfilEfectivoEncuesta: tocado perfil inexistente cae a meta", perfilEfectivoEncuesta(true, "nope", "ahorrar"), "cauto");
+    igual("perfilEfectivoEncuesta: siempre devuelve perfil valido",
+      PERFILES.some(function (p) { return p.id === perfilEfectivoEncuesta(false, "equilibrado", "ahorrar"); }), true);
+
+    // Montos escritos: signo negativo.
+    ok("tieneSignoNegativo: -500 es true", tieneSignoNegativo("-500") === true);
+    ok("tieneSignoNegativo: 1.000 es false", tieneSignoNegativo("1.000") === false);
+    ok("tieneSignoNegativo: vacio es false", tieneSignoNegativo("") === false);
+    ok("tieneSignoNegativo: null es false", tieneSignoNegativo(null) === false);
+    ok("tieneSignoNegativo: texto sin - es false", tieneSignoNegativo("abc") === false);
+    ok("tieneSignoNegativo: 5- es true", tieneSignoNegativo("5-") === true);
+    ok("validarMontoEscrito: -500 falla con mensaje", validarMontoEscrito("-500").ok === false);
+    ok("validarMontoEscrito: -500 trae mensaje", typeof validarMontoEscrito("-500").error === "string" && validarMontoEscrito("-500").error.length > 0);
+    ok("validarMontoEscrito: 500 pasa", validarMontoEscrito("500").ok === true);
+    ok("validarMontoEscrito: vacio pasa", validarMontoEscrito("").ok === true);
+
+    // Validacion de meta: tope superior 120.
+    ok("validarMeta: meses 200 falla", validarMeta({ tipo: "ahorrar", monto: 100, meses: 200 }).ok === false);
+    ok("validarMeta: meses 120 pasa", validarMeta({ tipo: "ahorrar", monto: 100, meses: 120 }).ok === true);
+    ok("validarMeta: meses 121 falla", validarMeta({ tipo: "ahorrar", monto: 100, meses: 121 }).ok === false);
+  });
+
+  correr("Motor extra", function () {
+    igual("aporteNecesarioParaMeta: 120000/12=10000", aporteNecesarioParaMeta(120000, 12), 10000);
+    igual("aporteNecesarioParaMeta: monto 0", aporteNecesarioParaMeta(0, 6), 0);
+    igual("aporteNecesarioParaMeta: meses 0", aporteNecesarioParaMeta(120000, 0), 0);
+    casi("aporteNecesarioParaMeta: 1000/3=333.33", aporteNecesarioParaMeta(1000, 3), 333.3333333333333, 0.0001);
+  });
+
+  correr("Portero", function () {
+    // debeHacerEncuesta es pura.
+    igual("debeHacerEncuesta: usuario nuevo -> true", debeHacerEncuesta({}), true);
+    igual("debeHacerEncuesta: en iframe -> false", debeHacerEncuesta({ esIframe: true }), false);
+    igual("debeHacerEncuesta: con ejemplo -> false", debeHacerEncuesta({ ejemplo: true }), false);
+    igual("debeHacerEncuesta: con enlace compartido -> false", debeHacerEncuesta({ enlaceCompartido: true }), false);
+    igual("debeHacerEncuesta: con config guardada -> false", debeHacerEncuesta({ config: true }), false);
+    igual("debeHacerEncuesta: sin argumentos -> true", debeHacerEncuesta(), true);
+
+    // Las pruebas corren dentro de un iframe: nunca se redirige.
+    ok("estaEnIframe() es true (corremos dentro de un iframe)", estaEnIframe() === true);
+
+    // hayConfigGuardada mira el valor CRUDO de localStorage (cargarConfig()
+    // escribe una config por defecto si no hay ninguna).
+    var antesConfig = null;
+    try { antesConfig = localStorage.getItem("gastamejor.config.v1"); } catch (_) { /* nada */ }
+    try { localStorage.removeItem("gastamejor.config.v1"); } catch (_) { /* nada */ }
+    igual("hayConfigGuardada: sin config guardada es false", hayConfigGuardada(), false);
+    try { localStorage.setItem("gastamejor.config.v1", JSON.stringify(configVacia())); } catch (_) { /* nada */ }
+    igual("hayConfigGuardada: con config guardada es true", hayConfigGuardada(), true);
+    try {
+      if (antesConfig === null) localStorage.removeItem("gastamejor.config.v1");
+      else localStorage.setItem("gastamejor.config.v1", antesConfig);
+    } catch (_) { /* nada */ }
+
+    // aplicarPortero NO redirige desde un iframe (deja la pagina intacta).
+    igual("aplicarPortero() devuelve false en el iframe", aplicarPortero(), false);
+    igual("aplicarPortero() no cambio la URL", location.href, urlOriginal);
+
+    // Funciones publicas del portero.
+    ok("hayEjemploGuardado existe", typeof window.hayEjemploGuardado === "function");
+    ok("estaEnIframe existe", typeof window.estaEnIframe === "function");
+  });
+
   /* ---------- Resultado ---------- */
 
   restaurar();

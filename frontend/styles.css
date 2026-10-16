@@ -1592,6 +1592,46 @@ a.btn-atras {
   .campo-linea > * { flex: 1 1 auto; }
 }
 
+/* Estados de carga / error para login */
+.estado-carga {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radio-chico);
+  background: var(--fondo);
+  border: var(--borde-suave);
+  color: var(--texto);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 3px solid var(--borde);
+  border-top-color: var(--primario);
+  border-radius: 50%;
+  animation: gm-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes gm-spin {
+  to { transform: rotate(360deg); }
+}
+
+.estado-error {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radio-chico);
+  background: var(--alerta-suave);
+  color: var(--alerta);
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
 /* Avisos verdes (exito / modo prueba) */
 .aviso-ok {
   margin-top: 12px;
@@ -1661,3 +1701,351 @@ a.btn-atras {
 .enlace-volver:hover { text-decoration: underline; }
 
 #btn-usar:disabled { opacity: 0.55; cursor: default; }
+
+/* ============================================================
+   Encuesta obligatoria de ingreso (encuesta.html)
+   Mobile-first desde 360px: nada se desborda a lo ancho.
+   ============================================================ */
+
+/* En escritorio la encuesta NO se estira: el `body.pagina-encuesta`
+   limita el contenedor a 640px (lectura comoda, contenido centrado).
+   A 360px no cambia nada: 640px > el ancho de la pantalla. */
+.pagina-encuesta .contenedor { max-width: 640px; }
+
+/* Salida rapida del encabezado: solo si ya hay config guardada */
+.encuesta-volver-app {
+  flex-basis: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tactil);
+  color: var(--primario-oscuro);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.encuesta-volver-app:hover,
+.encuesta-volver-app:focus { text-decoration: underline; }
+
+/* Barra de progreso + contador de pasos */
+.encuesta-progreso {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 var(--espacio);
+}
+
+.encuesta-progreso-pista {
+  flex: 1;
+  min-width: 0;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--borde);
+  overflow: hidden;
+}
+
+.encuesta-progreso-barra {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: var(--primario);
+  transition: width 0.2s ease;
+}
+
+.encuesta-contador {
+  flex: none;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--texto-suave);
+  white-space: nowrap;
+}
+
+/* Campos de texto simples (nombre, meses) */
+.encuesta-input {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-height: var(--tactil);
+  padding: 0 14px;
+  border: 2px solid var(--borde);
+  border-radius: var(--radio-chico);
+  background: var(--fondo);
+  color: var(--texto);
+  font-size: 17px;
+  font-family: inherit;
+  outline: none;
+}
+
+.encuesta-input:focus {
+  border-color: var(--primario);
+  background: var(--tarjeta);
+}
+
+/* Botón eliminar (integrado con sistema de diseño) */
+.btn-eliminar-categoria {
+  flex: 0 0 auto;
+  min-height: var(--tactil);
+  height: var(--tactil);
+  padding: 0 12px;
+  border: 2px solid var(--alerta);
+  background: var(--alerta-suave);
+  color: var(--alerta);
+  border-radius: var(--radio-chico);
+  font-weight: 800;
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  touch-action: manipulation;
+}
+
+.btn-eliminar-categoria:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-eliminar-categoria:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-eliminar-categoria:focus-visible {
+  outline: 3px solid rgba(220, 38, 38, 0.3);
+  outline-offset: 2px;
+}
+
+/* Campos de nombre y grupo en línea del gasto */
+.encuesta-gasto-nombre,
+.encuesta-gasto-grupo {
+  flex: 1 1 120px;
+  min-width: 0;
+  min-height: var(--tactil);
+  padding: 0 12px;
+  border: 2px solid var(--borde);
+  border-radius: var(--radio-chico);
+  background: var(--fondo);
+  color: var(--texto);
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+}
+
+.encuesta-gasto-nombre:focus,
+.encuesta-gasto-grupo:focus {
+  border-color: var(--primario);
+  background: var(--tarjeta);
+}
+
+/* Mensajes de error de cada paso (mismo estilo que .error) */
+.encuesta-error {
+  color: var(--alerta);
+  font-size: 14px;
+  margin: 10px 0 0;
+}
+
+/* Botonera del paso: Atrás / Siguiente */
+.encuesta-nav {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* Con un solo botón (o en el paso final) ocupa todo el ancho. */
+.encuesta-nav:has(> :only-child),
+.encuesta-nav-final { grid-template-columns: 1fr; }
+
+.encuesta-nav .btn-primario,
+.encuesta-nav .btn-secundario { margin-top: 16px; }
+
+/* Lista de gastos por grupo */
+.encuesta-grupo { margin-top: 18px; }
+
+.encuesta-grupo-titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.encuesta-categoria {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--borde);
+}
+
+.encuesta-categoria:last-child { border-bottom: none; }
+
+.encuesta-categoria-linea {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.encuesta-categoria-nombre {
+  flex: 1 1 120px;
+  min-width: 0;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+/* Campo de monto chico (gastos de la encuesta) */
+.campo-monto-chico {
+  flex: 1 1 140px;
+  min-width: 0;
+  padding: 2px 10px;
+}
+
+.simbolo-chico {
+  font-size: 18px;
+  margin-right: 4px;
+}
+
+.input-monto-chico {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  min-height: 48px;
+  border: none;
+  background: transparent;
+  color: var(--texto);
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+
+/* Perfil elegido en la encuesta */
+.perfil-btn.encuesta-perfil-sel {
+  border-color: var(--primario);
+  background: var(--primario-suave);
+}
+
+/* Resumen del plan (pasos "plan" y "guardar") */
+.encuesta-resumen {
+  margin-top: 12px;
+  border: var(--borde-suave);
+  border-radius: var(--radio-chico);
+  background: var(--fondo);
+  padding: 12px;
+}
+
+.encuesta-resumen-fila {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 15px;
+}
+
+.encuesta-resumen-fila > span { color: var(--texto-suave); }
+
+.encuesta-resumen-fila > strong {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.encuesta-resumen-total {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--borde);
+}
+
+.encuesta-resumen-total > strong { color: var(--primario-oscuro); font-size: 18px; }
+
+/* Total en vivo del paso de gastos */
+.encuesta-resumen-gastos { margin-top: 14px; }
+
+/* Perfil actual detectado con los gastos cargados (paso 4) */
+.encuesta-perfil-hoy {
+  margin-top: 4px;
+  padding: 12px;
+  border: var(--borde-suave);
+  border-left: 4px solid var(--primario);
+  border-radius: var(--radio-chico);
+  background: var(--fondo);
+}
+
+.encuesta-perfil-hoy-texto {
+  margin: 0;
+  font-size: 15px;
+}
+
+.encuesta-perfil-hoy-texto strong { font-weight: 800; }
+
+.encuesta-perfil-hoy-grupos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.encuesta-perfil-hoy-grupo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.encuesta-perfil-hoy-monto {
+  margin-left: auto;
+  color: var(--texto-suave);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.encuesta-perfil-hoy-nota {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+.encuesta-bloque-grupos {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--borde);
+}
+
+.encuesta-grupo-fila {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 14px;
+}
+
+.encuesta-grupo-nombre { font-weight: 700; }
+
+.encuesta-grupo-dato {
+  margin-left: auto;
+  color: var(--texto-suave);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Consejos del plan */
+.encuesta-consejos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.encuesta-consejos .titulo-seccion { margin-bottom: 8px; }
+
+@media (max-width: 400px) {
+  .campo-monto-chico { flex-basis: 120px; }
+  .input-monto-chico { font-size: 17px; }
+}

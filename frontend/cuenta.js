@@ -179,23 +179,30 @@ function olvidarSesion() {
 async function iniciar() {
   // Rellenar el selector de moneda y el input de mes.
   const selMoneda = $("#perfil-moneda");
-  selMoneda.innerHTML = MONEDAS.map(function (m) {
-    return '<option value="' + m.codigo + '">' + esc(m.nombre) + "</option>";
-  }).join("");
+  if (selMoneda) {
+    selMoneda.innerHTML = MONEDAS.map(function (m) {
+      return '<option value="' + m.codigo + '">' + esc(m.nombre) + "</option>";
+    }).join("");
+  }
 
-  $("#api-url").value = (function () {
-    try {
-      return localStorage.getItem("gastamejor.apiUrl.v1") || "";
-    } catch (_) {
-      return "";
-    }
-  })();
+  const apiUrlInput = $("#api-url");
+  if (apiUrlInput) {
+    apiUrlInput.value = (function () {
+      try {
+        return localStorage.getItem("gastamejor.apiUrl.v1") || "";
+      } catch (_) {
+        return "";
+      }
+    })();
+  }
 
   conectarEventos();
 
   estadoCuenta.mes = mesDeHoy();
-  $("#mes").value = estadoCuenta.mes;
-  $("#ing-fecha").value = diaDeHoy();
+  const mesInput = $("#mes");
+  const fechaInput = $("#ing-fecha");
+  if (mesInput) mesInput.value = estadoCuenta.mes;
+  if (fechaInput) fechaInput.value = diaDeHoy();
 
   if (API.hayToken()) {
     mostrarVista("cargando");
@@ -203,16 +210,17 @@ async function iniciar() {
       await cargarPanel();
       return;
     } catch (error) {
-      if (error.status === 401) {
+      if (error && error.status === 401) {
         apiBorrarToken();
         olvidarSesion();
       } else {
-        toast(error.message);
+        toast(error && error.message ? error.message : "Error cargando sesión");
       }
     }
   }
   mostrarVista("auth");
   comprobarBackend();
+  setLoginLoading(false, "");
 }
 
 /* Avisa (con contexto) si la dirección actual no responde como la API de
@@ -394,16 +402,40 @@ function mostrarTab(cual) {
   mostrarError("#error-auth", "");
 }
 
+function setLoginLoading(loading, errorMsg) {
+  const estado = $("#login-estado");
+  const estadoErr = $("#login-estado-error");
+  const btn = $("#btn-login");
+  if (estadoErr) {
+    if (errorMsg) {
+      estadoErr.textContent = errorMsg;
+      estadoErr.hidden = false;
+    } else {
+      estadoErr.textContent = "";
+      estadoErr.hidden = true;
+    }
+  }
+  if (estado) {
+    estado.hidden = !loading;
+  }
+  if (btn) {
+    btn.disabled = loading;
+  }
+}
+
 async function hacerLogin() {
   mostrarError("#error-auth", "");
+  setLoginLoading(false, "");
   const usuario = $("#login-usuario").value.trim();
   const password = $("#login-password").value;
   if (!usuario || !password) {
     mostrarError("#error-auth", "Completá usuario y contraseña.");
     return;
   }
+  setLoginLoading(true, "");
   try {
     const res = await API.login(usuario, password);
+    setLoginLoading(false, "");
     apiGuardarToken(res.token);
     estadoCuenta.cliente = res.cliente;
     recordarNombre(res.cliente);
@@ -414,7 +446,10 @@ async function hacerLogin() {
     await cargarMes(mesDeHoy());
     toast("¡Hola de nuevo! 👋");
   } catch (error) {
-    mostrarError("#error-auth", error.message);
+    const msg = (error && error.conexion)
+      ? "No se pudo conectar con el servidor. La base de datos puede estar en reposo; intentá nuevamente en unos segundos."
+      : (error && error.message ? error.message : "No se pudo iniciar sesión. Intentá nuevamente.");
+    setLoginLoading(false, msg);
   }
 }
 
@@ -548,10 +583,23 @@ async function borrarCuenta() {
     apiBorrarToken();
     estadoCuenta.cliente = null;
     olvidarSesion();
+    try {
+      localStorage.removeItem("gastamejor.config.v1");
+      localStorage.removeItem("gastamejor.meta.v1");
+      localStorage.removeItem("gastamejor.historial.v1");
+      localStorage.removeItem("gastamejor.ingresoMes.v1");
+      localStorage.removeItem("gastamejor.ejemplo.v1");
+      localStorage.removeItem("gastamejor.tour.v1");
+      localStorage.removeItem("gastamejor.cotizacion.v1");
+      localStorage.removeItem("gastamejor.token.v1");
+      localStorage.removeItem("gastamejor.nombre.v1");
+    } catch (_) {
+      /* sin persistencia */
+    }
     $("#borrar-password").value = "";
     mostrarTab("login");
     mostrarVista("auth");
-    toast("Tu cuenta fue eliminada.");
+    window.location.href = "index.html";
   } catch (error) {
     mostrarError("#error-borrar", error.message);
   } finally {
@@ -585,7 +633,8 @@ function conectarEventos() {
   $("#btn-borrar-cuenta").addEventListener("click", borrarCuenta);
   $("#btn-api-url").addEventListener("click", guardarUrl);
 
-  $("#login-password").addEventListener("keydown", function (e) {
+  const loginPwd = $("#login-password");
+  if (loginPwd) loginPwd.addEventListener("keydown", function (e) {
     if (e.key === "Enter") hacerLogin();
   });
 
@@ -620,4 +669,8 @@ function conectarEventos() {
   });
 }
 
-document.addEventListener("DOMContentLoaded", iniciar);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", iniciar);
+} else {
+  iniciar();
+}

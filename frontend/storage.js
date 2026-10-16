@@ -14,6 +14,7 @@ const CLAVE_COTIZACION = "gastamejor.cotizacion.v1";
 const CLAVE_HISTORIAL = "gastamejor.historial.v1";
 const CLAVE_TOUR = "gastamejor.tour.v1";
 const CLAVE_EJEMPLO = "gastamejor.ejemplo.v1";
+const CLAVE_META = "gastamejor.meta.v1";
 const VERSION_CONFIG = 3;
 const VERSION_ENLACE = 3;
 
@@ -436,6 +437,38 @@ function guardarIngresoMes(datos) {
 function borrarIngresoMes() {
   try {
     localStorage.removeItem(CLAVE_INGRESO_MES);
+  } catch (_) {
+    /* sin persistencia */
+  }
+}
+
+/* ---------- Meta de la encuesta de ingreso ----------
+   La encuesta obligatoria guarda acá lo que eligió el usuario
+   (tipo, etiqueta, emoji, monto, plazo y moneda) para mostrarlo
+   luego en la app. */
+
+function cargarMeta() {
+  try {
+    const crudo = localStorage.getItem(CLAVE_META);
+    if (!crudo) return null;
+    const datos = JSON.parse(crudo);
+    return datos && typeof datos === "object" ? datos : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function guardarMeta(meta) {
+  try {
+    localStorage.setItem(CLAVE_META, JSON.stringify(meta));
+  } catch (_) {
+    /* sin persistencia */
+  }
+}
+
+function borrarMeta() {
+  try {
+    localStorage.removeItem(CLAVE_META);
   } catch (_) {
     /* sin persistencia */
   }

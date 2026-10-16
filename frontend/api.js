@@ -73,15 +73,14 @@ async function apiPedir(metodo, ruta, cuerpo) {
 
   let respuesta;
   const controlador = new AbortController();
-  const temporizador = setTimeout(function () { controlador.abort(); }, 10000);
+  const temporizador = setTimeout(function () { controlador.abort(); }, 60000);
   opciones.signal = controlador.signal;
   try {
     respuesta = await fetch(apiBase() + ruta, opciones);
   } catch (_) {
     const error = new Error(
-      "No se pudo conectar con el servidor (¿está encendido el backend?). " +
-        "En local: arrancá `python servidor.py` y abrí http://127.0.0.1:8000/cuenta.html. " +
-        "Si el backend está publicado en otra dirección, pegala en «Servidor (avanzado)»."
+      "No se pudo conectar con el servidor. La base de datos puede estar en reposo; intentá nuevamente en unos segundos. " +
+        "En local, arrancá `python servidor.py` y abrí http://127.0.0.1:8000/cuenta.html."
     );
     error.conexion = true;
     throw error;

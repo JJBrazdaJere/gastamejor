@@ -325,5 +325,21 @@ def eliminar_cuenta(db, cliente_id, password):
     if not verificar_password(password, fila[0]):
         raise ErrorValidacion("La contrasena no es correcta.")
     with transaccion(db):
+        try:
+            ejecutar_afectando(db, "DELETE FROM historial WHERE usuario_id = %s", (cliente_id,))
+        except Exception:
+            pass
+        try:
+            ejecutar_afectando(db, "DELETE FROM ingresos_diarios WHERE usuario_id = %s", (cliente_id,))
+        except Exception:
+            pass
+        try:
+            ejecutar_afectando(db, "DELETE FROM ingresos WHERE cliente_id = %s", (cliente_id,))
+        except Exception:
+            pass
+        try:
+            ejecutar_afectando(db, "DELETE FROM sesiones WHERE cliente_id = %s", (cliente_id,))
+        except Exception:
+            pass
         ejecutar_afectando(db, "DELETE FROM clientes WHERE id = %s", (cliente_id,))
     return True

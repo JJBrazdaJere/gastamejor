@@ -43,6 +43,11 @@
             <label class="etiqueta" for="login-password">Contraseña</label>
             <input id="login-password" class="campo-texto" type="password" autocomplete="current-password">
             <button id="btn-login" class="btn-primario btn-ancho" type="button">Entrar</button>
+            <div id="login-estado" class="estado-carga" hidden>
+              <span class="spinner" aria-hidden="true"></span>
+              <span id="login-estado-texto">Conectando al servidor… Puede tardar hasta ~60 segundos si la base de datos está en reposo.</span>
+            </div>
+            <div id="login-estado-error" class="estado-error" hidden role="alert"></div>
           </div>
 
           <div id="panel-registro" hidden>

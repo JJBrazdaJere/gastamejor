@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>GastaMejor — Armá tu reparto</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="logo.png">
+</head>
+<body class="pagina-encuesta">
+  <div class="contenedor">
+
+    <header class="encabezado">
+      <h1 class="logo"><img src="logo.png" alt="Logo de GastaMejor" class="logo-imagen">GastaMejor</h1>
+      <div class="sesion-header">
+        <span id="sesion-nombre" class="sesion-header-nombre" hidden></span>
+        <button id="btn-sesion" class="btn-sesion" type="button">Iniciar sesión</button>
+      </div>
+      <!-- Salida rapida: solo si ya hay una configuracion guardada (no la
+           primera vez, que es obligatoria). Lo muestra encuesta.js. -->
+      <a id="enc-volver-app" class="encuesta-volver-app" href="index.html" hidden>← Volver a la app</a>
+    </header>
+
+    <main>
+      <p class="sub-lema">Armá tu reparto en 1 minuto: nos contás tu dinero, tus gastos y tu meta, y te dejamos la app lista.</p>
+
+      <!-- Progreso -->
+      <div class="encuesta-progreso" aria-hidden="true">
+        <div class="encuesta-progreso-pista">
+          <div id="enc-barra" class="encuesta-progreso-barra"></div>
+        </div>
+        <span id="enc-contador" class="encuesta-contador">Paso 1</span>
+      </div>
+
+      <!-- Paso 1: nombre -->
+      <section class="encuesta-paso" data-paso="nombre" hidden>
+        <div class="tarjeta">
+          <h2 class="titulo-seccion">👋 ¿Cómo te llamás?</h2>
+          <p class="nota">Solo lo usamos para saludarte en la app. Se guarda en este dispositivo.</p>
+          <label class="etiqueta" for="enc-nombre">Tu nombre</label>
+          <input id="enc-nombre" class="encuesta-input" type="text" autocomplete="given-name" placeholder="Ej.: Ana">
+          <p class="encuesta-error" id="enc-error-nombre" role="alert" hidden></p>
+          <div class="encuesta-nav">
+            <button class="btn-primario" type="button" data-nav="siguiente">Empezar</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Paso 2: ingreso -->
+      <section class="encuesta-paso" data-paso="ingreso" hidden>
+        <div class="tarjeta">
+          <h2 class="titulo-seccion">💵 ¿Cuánto dinero tenés este mes?</h2>
+          <p class="nota">Poné el total que entra a tu bolsillo este mes (sueldo, changas, lo que sea).</p>
+          <label class="etiqueta" for="enc-ingreso">Tu dinero de este mes</label>
+          <div class="campo-monto">
+            <span id="enc-simbolo" class="simbolo" aria-hidden="true">$</span>
+            <input id="enc-ingreso" class="input-monto" type="text" inputmode="decimal" placeholder="0,00" autocomplete="off">
+          </div>
+          <p class="encuesta-error" id="enc-error-ingreso" role="alert" hidden></p>
+          <label class="etiqueta" for="enc-moneda">Moneda</label>
+          <select id="enc-moneda" class="select" aria-label="Moneda"></select>
+          <div class="encuesta-nav">
+            <button class="btn-secundario" type="button" data-nav="anterior">Atrás</button>
+            <button class="btn-primario" type="button" data-nav="siguiente">Siguiente</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Paso 3: gastos -->
+      <section class="encuesta-paso" data-paso="gastos" hidden>
+        <div class="tarjeta">
+          <h2 class="titulo-seccion">🧾 Tus gastos del mes</h2>
+          <p class="nota">Completá los gastos que tengas (los que no uses, dejalos en cero). Con esto reservamos primero lo obligatorio.</p>
+          <div id="enc-gastos"></div>
+          <button id="enc-agregar-gasto" class="btn-secundario" type="button">➕ Agregar categoría</button>
+          <div id="enc-gastos-resumen" class="encuesta-resumen encuesta-resumen-gastos" aria-live="polite"></div>
+          <p class="encuesta-error" id="enc-error-gastos" role="alert" hidden></p>
+          <div class="encuesta-nav">
+            <button class="btn-secundario" type="button" data-nav="anterior">Atrás</button>
+            <button class="btn-primario" type="button" data-nav="siguiente">Siguiente</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Paso 4: perfil -->
+      <section class="encuesta-paso" data-paso="perfil" hidden>
+        <div class="tarjeta">
+          <h2 class="titulo-seccion">🎯 ¿Cómo querés repartir?</h2>
+          <p class="nota">Elegí un perfil: es tu objetivo de reparto entre necesidades, deseos y ahorro.</p>
+          <div id="enc-perfil-hoy" class="encuesta-perfil-hoy" aria-live="polite"></div>
+          <div id="enc-perfiles" class="perfiles" role="group" aria-label="Perfiles de reparto"></div>
+          <p class="encuesta-error" id="enc-error-perfil" role="alert" hidden></p>
+          <div class="encuesta-nav">
+            <button class="btn-secundario" type="button" data-nav="anterior">Atrás</button>
+            <button class="btn-primario" type="button" data-nav="siguiente">Siguiente</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Paso 5: meta -->
+      <section class="encuesta-paso" data-paso="meta" hidden>
+        <div class="tarjeta">
+          <h2 class="titulo-seccion">🌟 ¿Y qué querés lograr?</h2>
+          <p class="nota">Con lo que sobra después de tus gastos te armamos un ahorro para tu meta.</p>
+          <label class="etiqueta" for="enc-meta-tipo">Tu meta</label>
+          <select id="enc-meta-tipo" class="select" aria-label="Tu meta"></select>
+
+          <label class="etiqueta" for="enc-meta-monto">¿Cuánto necesitás?</label>
+          <div class="campo-monto">
+            <span id="enc-meta-simbolo" class="simbolo" aria-hidden="true">$</span>
+            <input id="enc-meta-monto" class="input-monto" type="text" inputmode="decimal" placeholder="0,00" autocomplete="off">
+          </div>
+          <p class="nota" id="enc-meta-ayuda">Si todavía no sabés el monto, dejalo en cero.</p>
+
+          <label class="etiqueta" for="enc-meta-meses">¿En cuántos meses?</label>
+          <input id="enc-meta-meses" class="encuesta-input" type="number" inputmode="numeric" min="1" max="120" step="1" value="6" aria-label="Meses para la meta">
+
+          <p class="encuesta-error" id="enc-error-meta" role="alert" hidden></p>
+          <div class="encuesta-nav">
+            <button class="btn-secundario" type="button" data-nav="anterior">Atrás</button>
+            <button class="btn-primario" type="button" data-nav="siguiente">Ver mi plan</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Paso 6: plan -->
+      <section class="encuesta-paso" data-paso="plan" hidden>
+        <div class="tarjeta">
+          <h2 class="titulo-seccion">📊 Tu plan sugerido</h2>
+          <div id="enc-plan" class="encuesta-resumen"></div>
+          <div class="encuesta-consejos" id="enc-consejos"></div>
+          <button id="enc-png" class="btn-secundario btn-ancho" type="button">💾 Guardar mi plan como imagen</button>
+          <div class="encuesta-nav">
+            <button class="btn-secundario" type="button" data-nav="anterior">Atrás</button>
+            <button class="btn-primario" type="button" data-nav="siguiente">Continuar</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Paso 7: guardar -->
+      <section class="encuesta-paso" data-paso="guardar" hidden>
+        <div class="tarjeta">
+          <h2 class="titulo-seccion">✅ Todo listo</h2>
+          <p class="nota">Guardamos tu reparto en este dispositivo y te llevamos a la app.</p>
+          <div id="enc-resumen-final" class="encuesta-resumen"></div>
+          <p class="encuesta-error" id="enc-error-guardar" role="alert" hidden></p>
+          <button id="enc-guardar-mes" class="btn-secundario btn-ancho" type="button">📅 Guardar este mes en el Historial</button>
+          <div class="encuesta-nav encuesta-nav-final">
+            <button class="btn-secundario" type="button" data-nav="anterior">Atrás</button>
+            <button id="enc-guardar" class="btn-primario" type="button">Guardar y abrir la app</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="pie">
+      <span>GastaMejor — prototipo local</span>
+    </footer>
+  </div>
+
+  <div id="enc-toast" class="toast" role="status" hidden></div>
+
+  <script src="storage.js"></script>
+  <script src="motor.js"></script>
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script src="sesion.js"></script>
+  <script src="encuesta.js"></script>
+</body>
+</html>

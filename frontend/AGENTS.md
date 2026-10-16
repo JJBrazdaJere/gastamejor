@@ -87,6 +87,28 @@ eficiente y optimizar en que se gasta.
     saltar o al guardar el primer mes (clave `gastamejor.tour.v1`), asi **no se
     repite**; se puede **relanzar** desde *Mis datos* → **🎓 Ver el tutorial
     guiado**.
+20. **Encuesta obligatoria de ingreso** (`encuesta.html`): la primera vez que se
+    abre la app (sin configuración guardada, sin el ejemplo cargado y sin
+    enlace compartido) un **portero** (`portero.js`) manda a la encuesta. Son
+    **7 pasos** (nombre — se saltea si ya hay sesión —, ingreso, gastos,
+    perfil, meta, plan y guardar): nombre, ingreso del mes con su moneda, los
+    gastos fijos por categoría, el perfil objetivo y una **meta** (vacaciones,
+    comprar, estudiar, ahorrar, fondo de emergencia, deudas u otra) con monto y
+    plazo. Lo que sobra después de los gastos se guarda como monto fijo en el
+    grupo que corresponde a la meta (clave `gastamejor.meta.v1`). Al terminar
+    guarda la configuración, la meta, el **ingreso del mes**
+    (`gastamejor.ingresoMes.v1`, así la app **prellena** *"Tu dinero de este
+    mes"*) y el **mes en curso en el historial**, y abre la app. En el paso de
+    gastos se muestra un **total en vivo** (*Gastos cargados* / *Para tu meta*
+    o *Faltante*) y en el paso de perfil se avisa **en qué perfil cae hoy** su
+    distribución. En el cierre hay un botón **📅 Guardar este mes en el
+    Historial** (guarda config + meta + mes y **no navega**; repetirlo no
+    duplica el mes) además de **Guardar y abrir la app**. Se puede repetir
+    desde *Tus datos* → **🧭 Volver a hacer la encuesta**; cuando ya hay una
+    configuración guardada, la encuesta muestra **← Volver a la app** en el
+    encabezado (en la primera vez, obligatoria, no aparece). En escritorio el
+    contenedor de la encuesta se limita a **640px** (`body.pagina-encuesta`)
+    para que la tarjeta no se estire.
 
 ## Requisitos de la web
 
@@ -104,11 +126,17 @@ eficiente y optimizar en que se gasta.
 - Solo HTML, CSS y JavaScript vanilla (sin frameworks, sin dependencias).
 - Capa de datos en `storage.js` con un adaptador: hoy guarda en localStorage y
   ofrece imagen PNG / enlace compartible + cotización del dólar cacheada +
-  historial mensual + el flag del tutorial guiado (`gastamejor.tour.v1`).
+  historial mensual + el flag del tutorial guiado (`gastamejor.tour.v1`) + la
+  meta de la encuesta (`gastamejor.meta.v1`).
   Disenada para poder cambiar a sincronizacion real mas adelante sin reescribir
   la UI.
-- Separacion: `index.html` (estructura), `styles.css` (diseno con variables CSS),
-  `app.js` (logica e interfaz), `storage.js` (datos).
+- Separacion: `index.html` / `encuesta.html` (estructura), `styles.css` (diseno
+  con variables CSS), `motor.js` (**motor puro**: reparto, perfiles, plan,
+  consejero, metas y validaciones; no toca el DOM, ni `estado`, ni
+  `localStorage` — la cotización del dólar entra siempre por parámetro),
+  `app.js` (logica e interfaz de la app), `encuesta.js` (la encuesta de
+  ingreso), `portero.js` (decide si hay que pasar por la encuesta),
+  `storage.js` (datos).
 - Nombres de variables, funciones y mensajes **en espanol**.
 - Validaciones: monto numerico y positivo; porcentajes entre 0 y 100;
   montos fijos mayores o iguales a 0. Los fijos se reservan primero y los
@@ -120,8 +148,12 @@ eficiente y optimizar en que se gasta.
 ```
 gastos-app/
   index.html        # Estructura de la web
+  encuesta.html     # Encuesta obligatoria de ingreso (7 pasos)
   styles.css        # Sistema de diseno (tokens en :root)
+  motor.js          # Motor PURO: reparto, perfiles, plan, metas, validaciones
   app.js            # Logica de reparto e interfaz
+  encuesta.js       # Encuesta de ingreso (logica e interfaz)
+  portero.js        # Portero de entrada: manda a la encuesta si hace falta
   storage.js        # LocalStorage + imagen/enlace + cotización del dólar
   logo.png          # Icono / logo
   tutorial.html     # Tutorial visual e interactivo (usa el ejemplo)
@@ -164,5 +196,9 @@ gastos-app/
 - Los montos se escriben con puntos de miles y coma decimal.
 - `tests/correr-tests.ps1` termina con código 0 (todas las pruebas pasan) y
   `pruebas.html` muestra PASS/FAIL para que el usuario lo chequee en la web.
+- La primera vez (sin configuración guardada) la app deriva a la **encuesta
+  obligatoria** de ingreso; al terminarla queda guardado el reparto, la meta
+  (`gastamejor.meta.v1`) y el mes en curso en el historial, y la app abre
+  normalmente (sin volver a redirigir).
 - El botón de ejemplo del `tutorial.html` carga los 12 meses y se ven en el
   calendario del Historial; la app (`index.html`) queda intacta.
