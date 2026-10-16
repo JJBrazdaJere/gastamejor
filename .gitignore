@@ -21,3 +21,25 @@ desktop.ini
 
 # --- Herramientas / paquetes ---
 *.zip
+
+# --- Variables de entorno (otras variantes; .env.example SI se sube) ---
+.env.*
+!.env.example
+
+# --- Caches de herramientas ---
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Logs y temporales ---
+*.log
+tmp/
+.tmp/
+
+# --- Node (por si se agrega tooling) ---
+node_modules/
+
+# --- Editores (extra) ---
+*.swp
+*~
