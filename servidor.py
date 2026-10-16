@@ -127,13 +127,7 @@ class Manejador(BaseHTTPRequestHandler):
         """405 en JSON (no el 501 en HTML que trae http.server por defecto)."""
         self._responder(
             405,
-            {
-                "error": (
-                    "El metodo {} no esta permitido en esta direccion. "
-                    "Si buscabas la API de GastaMejor, asegurate de estar usando "
-                    "servidor.py y no un servidor de archivos estaticos."
-                ).format(self.command)
-            },
+            {"error": "Método no permitido para esta ruta de API."},
             cabeceras_extra={"Allow": permitidos or "GET, HEAD, POST, PATCH, DELETE, OPTIONS"},
         )
 
@@ -234,12 +228,16 @@ class Manejador(BaseHTTPRequestHandler):
 
     def _api(self, metodo, ruta, consulta):
         # --- Sin autenticacion ---
-        if metodo == "GET" and ruta == "/api/salud":
+        if ruta == "/api/salud":
+            if metodo != "GET":
+                return self._json(405, {"error": "Método no permitido para esta ruta de API."})
             with self._conexion() as db:
                 db.execute("SELECT 1")
             return self._json(200, {"ok": True, "db": True})
 
-        if metodo == "POST" and ruta == "/api/registro":
+        if ruta == "/api/registro":
+            if metodo != "POST":
+                return self._json(405, {"error": "Método no permitido para esta ruta de API."})
             datos = self._leer_json()
             with self._conexion() as db:
                 resultado = cuentas.registrar(
@@ -252,23 +250,43 @@ class Manejador(BaseHTTPRequestHandler):
                 )
             return self._json(201, resultado)
 
-        if metodo == "POST" and ruta == "/api/verificar":
+        if ruta == "/api/verificar":
+            if metodo != "POST":
+                return self._json(405, {"error": "Método no permitido para esta ruta de API."})
             datos = self._leer_json()
             with self._conexion() as db:
                 cuentas.verificar_email(db, datos.get("email"), datos.get("codigo"))
             return self._json(200, {"ok": True, "mensaje": "Email verificado."})
 
-        if metodo == "POST" and ruta == "/api/reenviar":
+        if ruta == "/api/reenviar":
+            if metodo != "POST":
+                return self._json(405, {"error": "Método no permitido para esta ruta de API."})
             datos = self._leer_json()
             with self._conexion() as db:
                 resultado = cuentas.reenviar_codigo(db, datos.get("email"))
             return self._json(200, resultado)
 
-        if metodo == "POST" and ruta == "/api/login":
+        if ruta == "/api/login":
+            if metodo != "POST":
+                return self._json(405, {"error": "Método no permitido para esta ruta de API."})
             datos = self._leer_json()
             with self._conexion() as db:
                 resultado = cuentas.iniciar_sesion(db, datos.get("usuario"), datos.get("password"))
             return self._json(200, resultado)
+
+        # Métodos incorrectos para rutas API conocidas
+        api_post = ["/api/registro", "/api/verificar", "/api/reenviar", "/api/login", "/api/password"]
+        if metodo != "POST" and ruta in api_post:
+            return self._json(405, {"error": "Método no permitido para esta ruta de API."})
+        api_get = ["/api/salud", "/api/perfil", "/api/resumen", "/api/resumen/anual"]
+        if metodo != "GET" and ruta in api_get:
+            return self._json(405, {"error": "Método no permitido para esta ruta de API."})
+        api_patch = ["/api/perfil"]
+        if metodo != "PATCH" and ruta in api_patch:
+            return self._json(405, {"error": "Método no permitido para esta ruta de API."})
+        api_delete = ["/api/cuenta"]
+        if metodo != "DELETE" and ruta in api_delete:
+            return self._json(405, {"error": "Método no permitido para esta ruta de API."})
 
         # --- Con autenticacion ---
         if metodo == "POST" and ruta == "/api/logout":
@@ -373,7 +391,7 @@ class Manejador(BaseHTTPRequestHandler):
         # Método no permitido: la ruta existe pero no para este método
         # Evita el mensaje verbose por defecto del servidor
         if ruta.startswith("/api/"):
-            return self._error(405, "Método no permitido para esta ruta de API.")
+            return self._json(405, {"error": "Método no permitido para esta ruta de API."})
 
         return self._error(404, "Ruta no encontrada: {} {}".format(metodo, ruta))
 
