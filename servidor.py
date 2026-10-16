@@ -370,6 +370,11 @@ class Manejador(BaseHTTPRequestHandler):
                 filas = ingresos.resumen_anual(db, cliente["id"], anio)
             return self._json(200, {"meses": filas})
 
+        # Método no permitido: la ruta existe pero no para este método
+        # Evita el mensaje verbose por defecto del servidor
+        if ruta.startswith("/api/"):
+            return self._error(405, "Método no permitido para esta ruta de API.")
+
         return self._error(404, "Ruta no encontrada: {} {}".format(metodo, ruta))
 
     # --------------------------------------------------------- archivos

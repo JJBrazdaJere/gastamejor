@@ -121,8 +121,7 @@ function mensajeDeRespuesta(status, datos) {
     return (
       "Esta dirección es un servidor de archivos, no el backend de GastaMejor (error 501). " +
       "En local: cortá ese servidor y arrancá `python servidor.py`; después abrí " +
-      "http://127.0.0.1:8000/cuenta.html. Si el backend está en otra dirección, " +
-      "pegala en «Servidor (avanzado)»."
+      "http://127.0.0.1:8000/cuenta.html."
     );
   }
   if (status === 404 || status === 405) {
@@ -131,8 +130,7 @@ function mensajeDeRespuesta(status, datos) {
       (apiBase() || "esta dirección") +
       " (error " +
       status +
-      "). Para usar cuentas hace falta el backend (servidor.py). " +
-      "Si está publicado en otra dirección, pegala en «Servidor (avanzado)»."
+      "). Para usar cuentas hace falta el backend (servidor.py)."
     );
   }
   return "Error " + status + " del servidor.";
