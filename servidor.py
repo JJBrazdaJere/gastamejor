@@ -35,6 +35,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 
+import psycopg
+
 import cuentas
 import ingresos
 from config import (
@@ -105,15 +107,21 @@ class Manejador(BaseHTTPRequestHandler):
                 datos = cuerpo.encode("utf-8")
             else:
                 datos = bytes(cuerpo)
-        self.send_response(codigo)
-        self.send_header("Content-Type", tipo)
-        self.send_header("Content-Length", str(len(datos)))
-        self._cors()
-        for clave, valor in (cabeceras_extra or {}).items():
-            self.send_header(clave, valor)
-        self.end_headers()
-        if datos and self.command != "HEAD":
-            self.wfile.write(datos)
+        try:
+            self.send_response(codigo)
+            self.send_header("Content-Type", tipo)
+            self.send_header("Content-Length", str(len(datos)))
+            self._cors()
+            for clave, valor in (cabeceras_extra or {}).items():
+                self.send_header(clave, valor)
+            self.end_headers()
+            if datos and self.command != "HEAD":
+                self.wfile.write(datos)
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, ConnectionError):
+            # El cliente se desconecto antes de recibir la respuesta (p. ej. cerro
+            # la pestana mientras la base de datos tardaba). No hay a quien avisar:
+            # se corta la conexion para no intentar leer otro pedido (keep-alive).
+            self.close_connection = True
 
     def _metodo_no_permitido(self, permitidos=None):
         """405 en JSON (no el 501 en HTML que trae http.server por defecto)."""
@@ -205,6 +213,8 @@ class Manejador(BaseHTTPRequestHandler):
             self._error(404, str(error))
         except ErrorAplicacion as error:
             self._error(409, str(error))
+        except psycopg.OperationalError:
+            self._error(503, "No se pudo conectar con la base de datos. Reintentá en unos segundos.")
         except Exception as error:  # noqa: BLE001 - ultima red de seguridad
             self.log_message("ERROR inesperado: %s", error)
             self._error(500, "Error interno del servidor.")

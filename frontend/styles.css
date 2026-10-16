@@ -132,7 +132,7 @@ body {
   font-family: inherit;
   font-weight: 700;
   font-size: 14px;
-  min-height: 40px;
+  min-height: 48px;
   padding: 0 16px;
   cursor: pointer;
   white-space: nowrap;
@@ -843,6 +843,7 @@ body {
 
 /* No tapar los modales abiertos (si el navegador soporta :has). */
 body:has(.modal:not([hidden])) .btn-reportar { display: none; }
+body:has(.modal:not([hidden])) .tabbar { display: none; }
 
 @media (max-width: 560px) {
   .btn-reportar {
@@ -1036,6 +1037,11 @@ body:has(.modal:not([hidden])) .btn-reportar { display: none; }
   padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
 }
 
+.modal-caja:not(.modal-caja-catalogo) {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
 .enlace-texto {
   width: 100%;
   border: var(--borde-suave);
@@ -1075,6 +1081,7 @@ body:has(.modal:not([hidden])) .btn-reportar { display: none; }
   box-shadow: var(--sombra);
   z-index: 20;
   white-space: nowrap;
+  pointer-events: none;
 }
 
 /* ---------- Monto en USD (ahorro) ---------- */

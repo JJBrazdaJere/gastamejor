@@ -20,5 +20,6 @@ def conectar_db(host, port, dbname, user, password, sslmode=None):
         user=user,
         password=password,
         autocommit=True,
+        connect_timeout=3,
         **opciones,
     )

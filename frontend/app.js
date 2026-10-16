@@ -255,6 +255,11 @@ function mostrarPestana(tab) {
     b.classList.toggle("activo", b.dataset.tab === tab);
   });
   if (tab === "historial") renderHistorial();
+  else if (tab === "reparto") {
+    const n = pantallaRepartoActual();
+    if (n === "resultado") renderResultado();
+    else if (n === "ajustar") renderAjustar();
+  }
   actualizarBotonAtras();
   window.scrollTo({ top: 0 });
 }
@@ -819,6 +824,7 @@ function aplicarPerfil(id) {
   reiniciarPlan();
   guardarConfig(estado.config);
   renderAjustar();
+  if (pantallaRepartoActual() === "resultado") renderResultado();
   toast("Perfil " + p.nombre + " aplicado ✔");
 }
 
@@ -1075,6 +1081,7 @@ function aplicarProximoPaso() {
   cfg.planPaso = pasoNuevo;
   guardarConfig(cfg);
   renderAjustar();
+  if (pantallaRepartoActual() === "resultado") renderResultado();
   toast("Próximo paso aplicado ✔");
 }
 

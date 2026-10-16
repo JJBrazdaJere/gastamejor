@@ -72,6 +72,9 @@ async function apiPedir(metodo, ruta, cuerpo) {
   }
 
   let respuesta;
+  const controlador = new AbortController();
+  const temporizador = setTimeout(function () { controlador.abort(); }, 10000);
+  opciones.signal = controlador.signal;
   try {
     respuesta = await fetch(apiBase() + ruta, opciones);
   } catch (_) {
@@ -82,6 +85,8 @@ async function apiPedir(metodo, ruta, cuerpo) {
     );
     error.conexion = true;
     throw error;
+  } finally {
+    clearTimeout(temporizador);
   }
 
   let datos = null;
