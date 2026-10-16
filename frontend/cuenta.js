@@ -631,7 +631,8 @@ function conectarEventos() {
   $("#btn-reenviar").addEventListener("click", reenviarCodigo);
   $("#btn-logout").addEventListener("click", salir);
   $("#btn-borrar-cuenta").addEventListener("click", borrarCuenta);
-  $("#btn-api-url").addEventListener("click", guardarUrl);
+  const btnApiUrl = $("#btn-api-url");
+  if (btnApiUrl) btnApiUrl.addEventListener("click", guardarUrl);
 
   const loginPwd = $("#login-password");
   if (loginPwd) loginPwd.addEventListener("keydown", function (e) {
