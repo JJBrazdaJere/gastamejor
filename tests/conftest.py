@@ -17,6 +17,10 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if RAIZ not in sys.path:
     sys.path.insert(0, RAIZ)
 
+# Los tests nunca deben enviar correos reales: forzamos el modo test ANTES
+# de importar config (así el valor del .env no lo pisa).
+os.environ["CORREO_MODO"] = "test"
+
 import config  # noqa: E402
 
 

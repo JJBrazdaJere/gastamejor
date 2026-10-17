@@ -180,6 +180,12 @@ El dinero viaja como **texto con 2 decimales** (ej. `"3500.50"`), nunca como
 python -m pytest -v
 ```
 
+`tests/conftest.py` fuerza `CORREO_MODO=test` antes de importar `config`, así
+los tests **nunca** envían un correo real (el modo test imprime el código en
+lugar de mandarlo) aunque el `.env` tenga `CORREO_MODO=smtp`. No hace falta
+definir la variable a mano; si querés otro modo, podés exportarla igual en la
+terminal antes de correr pytest.
+
 - **Unitarios** (`tests/test_validaciones.py`): prueban las validaciones sin
   tocar la base.
 - **Integración** (`tests/test_*.py`): ejecutan operaciones reales contra
