@@ -559,51 +559,104 @@ async function salir() {
   toast("Sesión cerrada.");
 }
 
-/* Borra la cuenta del usuario. Pide la contraseña y una confirmación extra
-   porque es una acción irreversible (se borran tambien todos los ingresos). */
-async function borrarCuenta() {
+/* Borra la cuenta del usuario. Es una accion irreversible (se borran tambien
+   todos sus ingresos y sesiones), asi que se confirma en DOS PASOS dentro de
+   la tarjeta: primero "Borrar mi cuenta" muestra el bloque de confirmacion y
+   despues "Confirmar borrado" pide la API con la contrasena.
+
+   Ojo: NO se usa window.confirm(). Los dialogos nativos los puede suprimir el
+   navegador (y el clic parecia "no hacer nada"). */
+
+/* Muestra el bloque de confirmacion (paso 2). */
+function mostrarConfirmacionBorrado() {
   mostrarError("#error-borrar", "");
-  const password = $("#borrar-password").value;
+  const bloque = $("#confirmar-borrado");
+  const boton = $("#btn-borrar-cuenta");
+  if (bloque) bloque.hidden = false;
+  if (boton) boton.hidden = true;
+  const confirmar = $("#btn-confirmar-borrado");
+  if (confirmar) confirmar.focus();
+}
+
+/* Cancelar: oculta el bloque, limpia el estado y deja todo como al principio. */
+function cancelarBorrado() {
+  mostrarError("#error-borrar", "");
+  setBorradoLoading(false);
+  const campo = $("#borrar-password");
+  if (campo) campo.value = "";
+  const bloque = $("#confirmar-borrado");
+  if (bloque) bloque.hidden = true;
+  const boton = $("#btn-borrar-cuenta");
+  if (boton) {
+    boton.hidden = false;
+    boton.disabled = false;
+  }
+}
+
+/* Deshabilita botones y campo mientras se borra, y muestra "Borrando…". */
+function setBorradoLoading(activo) {
+  const confirmar = $("#btn-confirmar-borrado");
+  const cancelar = $("#btn-cancelar-borrado");
+  const campo = $("#borrar-password");
+  const estado = $("#borrar-estado");
+  const boton = $("#btn-borrar-cuenta");
+
+  if (confirmar) {
+    confirmar.disabled = activo;
+    confirmar.textContent = activo ? "Borrando…" : "Confirmar borrado";
+  }
+  if (cancelar) cancelar.disabled = activo;
+  if (campo) campo.disabled = activo;
+  if (boton) boton.disabled = activo;
+  if (estado) estado.hidden = !activo;
+}
+
+/* Vacia TODO lo guardado en el dispositivo: la cuenta ya no existe (y con la
+   proxima visita la encuesta de ingreso vuelve a pedirse). */
+function limpiarDatosLocales() {
+  apiBorrarToken();
+  estadoCuenta.cliente = null;
+  olvidarSesion();
+  try {
+    localStorage.removeItem("gastamejor.config.v1");
+    localStorage.removeItem("gastamejor.meta.v1");
+    localStorage.removeItem("gastamejor.historial.v1");
+    localStorage.removeItem("gastamejor.ingresoMes.v1");
+    localStorage.removeItem("gastamejor.ejemplo.v1");
+    localStorage.removeItem("gastamejor.tour.v1");
+    localStorage.removeItem("gastamejor.cotizacion.v1");
+    localStorage.removeItem("gastamejor.token.v1");
+    localStorage.removeItem("gastamejor.nombre.v1");
+  } catch (_) {
+    /* sin persistencia */
+  }
+}
+
+/* Paso 2: valida la contraseña y borra la cuenta en el servidor. */
+async function confirmarBorrado() {
+  mostrarError("#error-borrar", "");
+  const campo = $("#borrar-password");
+  const password = campo ? campo.value : "";
   if (!password) {
     mostrarError("#error-borrar", "Escribí tu contraseña para confirmar.");
-    $("#borrar-password").focus();
+    if (campo) campo.focus();
     return;
   }
-  const seguro = window.confirm(
-    "¿Seguro que querés borrar tu cuenta?\n\n" +
-      "Se van a eliminar tu cuenta y TODOS tus ingresos. " +
-      "Esta acción no se puede deshacer."
-  );
-  if (!seguro) return;
 
-  const boton = $("#btn-borrar-cuenta");
-  boton.disabled = true;
+  setBorradoLoading(true);
   try {
     await API.eliminarCuenta(password);
-    apiBorrarToken();
-    estadoCuenta.cliente = null;
-    olvidarSesion();
-    try {
-      localStorage.removeItem("gastamejor.config.v1");
-      localStorage.removeItem("gastamejor.meta.v1");
-      localStorage.removeItem("gastamejor.historial.v1");
-      localStorage.removeItem("gastamejor.ingresoMes.v1");
-      localStorage.removeItem("gastamejor.ejemplo.v1");
-      localStorage.removeItem("gastamejor.tour.v1");
-      localStorage.removeItem("gastamejor.cotizacion.v1");
-      localStorage.removeItem("gastamejor.token.v1");
-      localStorage.removeItem("gastamejor.nombre.v1");
-    } catch (_) {
-      /* sin persistencia */
-    }
-    $("#borrar-password").value = "";
+    limpiarDatosLocales();
+    if (campo) campo.value = "";
     mostrarTab("login");
     mostrarVista("auth");
     window.location.href = "index.html";
   } catch (error) {
-    mostrarError("#error-borrar", error.message);
-  } finally {
-    boton.disabled = false;
+    const msg = (error && error.conexion)
+      ? "No se pudo conectar con el servidor. La base de datos puede estar en reposo; intentá nuevamente en unos segundos."
+      : (error && error.message ? error.message : "No se pudo borrar la cuenta. Intentá nuevamente.");
+    setBorradoLoading(false);
+    mostrarError("#error-borrar", msg);
   }
 }
 
@@ -630,7 +683,22 @@ function conectarEventos() {
   $("#btn-verificar").addEventListener("click", hacerVerificacion);
   $("#btn-reenviar").addEventListener("click", reenviarCodigo);
   $("#btn-logout").addEventListener("click", salir);
-  $("#btn-borrar-cuenta").addEventListener("click", borrarCuenta);
+
+  /* Borrar cuenta: confirmacion en 2 pasos dentro de la tarjeta (sin
+     window.confirm, que el navegador puede suprimir). */
+  $("#btn-borrar-cuenta").addEventListener("click", mostrarConfirmacionBorrado);
+  const btnConfirmarBorrado = $("#btn-confirmar-borrado");
+  if (btnConfirmarBorrado) btnConfirmarBorrado.addEventListener("click", confirmarBorrado);
+  const btnCancelarBorrado = $("#btn-cancelar-borrado");
+  if (btnCancelarBorrado) btnCancelarBorrado.addEventListener("click", cancelarBorrado);
+  const borrarPwd = $("#borrar-password");
+  if (borrarPwd) borrarPwd.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter") return;
+    const bloque = $("#confirmar-borrado");
+    if (bloque && !bloque.hidden) confirmarBorrado();
+    else mostrarConfirmacionBorrado();
+  });
+
   const btnApiUrl = $("#btn-api-url");
   if (btnApiUrl) btnApiUrl.addEventListener("click", guardarUrl);
 

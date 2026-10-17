@@ -47,10 +47,20 @@ from config import (
     variables_faltantes,
 )
 from conexion import conectar_db
-from errores import ErrorAplicacion, ErrorNoEncontrado, ErrorValidacion
+from errores import (
+    ErrorAplicacion,
+    ErrorClaveForanea,
+    ErrorNoEncontrado,
+    ErrorUnico,
+    ErrorValidacion,
+)
 from validaciones import formatear_monto
 
 _FRONTEND = Path(__file__).resolve().parent / "frontend"
+
+# Mensaje generico para los fallos no previstos: nunca se le devuelve al
+# cliente el detalle tecnico (por ej. el texto crudo de PostgreSQL).
+ERROR_INTERNO = "No pudimos completar la operación. Intentá de nuevo en unos segundos."
 
 _TIPOS = {
     ".html": "text/html; charset=utf-8",
@@ -139,8 +149,8 @@ class Manejador(BaseHTTPRequestHandler):
             return self._metodo_no_permitido
         raise AttributeError(nombre)
 
-    def _json(self, codigo, cuerpo):
-        self._responder(codigo, cuerpo)
+    def _json(self, codigo, cuerpo, cabeceras_extra=None):
+        self._responder(codigo, cuerpo, cabeceras_extra=cabeceras_extra)
 
     def _error(self, codigo, mensaje):
         self._responder(codigo, {"error": mensaje})
@@ -205,13 +215,29 @@ class Manejador(BaseHTTPRequestHandler):
             self._error(400, str(error))
         except ErrorNoEncontrado as error:
             self._error(404, str(error))
-        except ErrorAplicacion as error:
+        except (ErrorUnico, ErrorClaveForanea) as error:
+            # Errores de negocio con mensaje pensado para el usuario (dato
+            # duplicado, registro relacionado inexistente): se mantiene el 409.
             self._error(409, str(error))
         except psycopg.OperationalError:
             self._error(503, "No se pudo conectar con la base de datos. Reintentá en unos segundos.")
+        except ErrorAplicacion as error:
+            if isinstance(error.__cause__, psycopg.OperationalError):
+                # El fallo vino de la conexion con PostgreSQL (base en reposo o
+                # caida): se mantiene el 503, que el frontend sabe explicar.
+                self.log_message("ERROR de conexion con la base: %s", error.__cause__)
+                return self._error(
+                    503, "No se pudo conectar con la base de datos. Reintentá en unos segundos."
+                )
+            # ErrorBaseDatos (fallo inesperado de PostgreSQL) u otro error de
+            # aplicacion no previsto: el mensaje puede traer detalle tecnico
+            # (nombres de tablas, etc.), asi que queda SOLO en el log del
+            # servidor y al cliente le llega un mensaje generico.
+            self.log_message("ERROR de base de datos: %s", error)
+            return self._error(500, ERROR_INTERNO)
         except Exception as error:  # noqa: BLE001 - ultima red de seguridad
             self.log_message("ERROR inesperado: %s", error)
-            self._error(500, "Error interno del servidor.")
+            self._error(500, ERROR_INTERNO)
 
     def _conexion(self):
         return conectar_db(**DB_CONFIG)
@@ -227,17 +253,40 @@ class Manejador(BaseHTTPRequestHandler):
         return db, cliente
 
     def _api(self, metodo, ruta, consulta):
+        # Metodos validos por ruta. Si una ruta CONOCIDA se pide con un metodo
+        # equivocado se responde 405 (con cabecera Allow); si la ruta no existe,
+        # se sigue de largo y termina en un 404 JSON.
+        # Ojo: /api/perfil acepta GET (leer) y PATCH (actualizar); listarlos
+        # todos evita el bug de devolver 405 a un metodo valido.
+        metodos_validos = {
+            "/api/salud": ("GET",),
+            "/api/perfil": ("GET", "PATCH"),
+            "/api/resumen": ("GET",),
+            "/api/resumen/anual": ("GET",),
+            "/api/registro": ("POST",),
+            "/api/verificar": ("POST",),
+            "/api/reenviar": ("POST",),
+            "/api/login": ("POST",),
+            "/api/password": ("POST",),
+            "/api/logout": ("POST",),
+            "/api/cuenta": ("DELETE",),
+            "/api/ingresos": ("GET", "POST"),
+        }
+        permitidos = metodos_validos.get(ruta)
+        if permitidos and metodo not in permitidos:
+            return self._json(
+                405,
+                {"error": "Método no permitido para esta ruta de API."},
+                cabeceras_extra={"Allow": "OPTIONS, " + ", ".join(permitidos)},
+            )
+
         # --- Sin autenticacion ---
         if ruta == "/api/salud":
-            if metodo != "GET":
-                return self._json(405, {"error": "Método no permitido para esta ruta de API."})
             with self._conexion() as db:
                 db.execute("SELECT 1")
             return self._json(200, {"ok": True, "db": True})
 
         if ruta == "/api/registro":
-            if metodo != "POST":
-                return self._json(405, {"error": "Método no permitido para esta ruta de API."})
             datos = self._leer_json()
             with self._conexion() as db:
                 resultado = cuentas.registrar(
@@ -251,42 +300,22 @@ class Manejador(BaseHTTPRequestHandler):
             return self._json(201, resultado)
 
         if ruta == "/api/verificar":
-            if metodo != "POST":
-                return self._json(405, {"error": "Método no permitido para esta ruta de API."})
             datos = self._leer_json()
             with self._conexion() as db:
                 cuentas.verificar_email(db, datos.get("email"), datos.get("codigo"))
             return self._json(200, {"ok": True, "mensaje": "Email verificado."})
 
         if ruta == "/api/reenviar":
-            if metodo != "POST":
-                return self._json(405, {"error": "Método no permitido para esta ruta de API."})
             datos = self._leer_json()
             with self._conexion() as db:
                 resultado = cuentas.reenviar_codigo(db, datos.get("email"))
             return self._json(200, resultado)
 
         if ruta == "/api/login":
-            if metodo != "POST":
-                return self._json(405, {"error": "Método no permitido para esta ruta de API."})
             datos = self._leer_json()
             with self._conexion() as db:
                 resultado = cuentas.iniciar_sesion(db, datos.get("usuario"), datos.get("password"))
             return self._json(200, resultado)
-
-        # Métodos incorrectos para rutas API conocidas
-        api_post = ["/api/registro", "/api/verificar", "/api/reenviar", "/api/login", "/api/password"]
-        if metodo != "POST" and ruta in api_post:
-            return self._json(405, {"error": "Método no permitido para esta ruta de API."})
-        api_get = ["/api/salud", "/api/perfil", "/api/resumen", "/api/resumen/anual"]
-        if metodo != "GET" and ruta in api_get:
-            return self._json(405, {"error": "Método no permitido para esta ruta de API."})
-        api_patch = ["/api/perfil"]
-        if metodo != "PATCH" and ruta in api_patch:
-            return self._json(405, {"error": "Método no permitido para esta ruta de API."})
-        api_delete = ["/api/cuenta"]
-        if metodo != "DELETE" and ruta in api_delete:
-            return self._json(405, {"error": "Método no permitido para esta ruta de API."})
 
         # --- Con autenticacion ---
         if metodo == "POST" and ruta == "/api/logout":
@@ -388,11 +417,9 @@ class Manejador(BaseHTTPRequestHandler):
                 filas = ingresos.resumen_anual(db, cliente["id"], anio)
             return self._json(200, {"meses": filas})
 
-        # Método no permitido: la ruta existe pero no para este método
-        # Evita el mensaje verbose por defecto del servidor
-        if ruta.startswith("/api/"):
-            return self._json(405, {"error": "Método no permitido para esta ruta de API."})
-
+        # Si llego hasta acá, la ruta /api no existe: 404 en JSON (antes
+        # devolvia 405 "método no permitido", que confundia: el 405 se reserva
+        # para una ruta CONOCIDA pedida con un método equivocado).
         return self._error(404, "Ruta no encontrada: {} {}".format(metodo, ruta))
 
     # --------------------------------------------------------- archivos

@@ -324,22 +324,13 @@ def eliminar_cuenta(db, cliente_id, password):
         raise ErrorNoEncontrado("Cuenta no encontrada.")
     if not verificar_password(password, fila[0]):
         raise ErrorValidacion("La contrasena no es correcta.")
+    # Un solo DELETE: las tablas que dependen de `clientes` (ingresos y
+    # sesiones) se declaran con ON DELETE CASCADE, asi que la base las limpia
+    # sola (ver migrations/005_ingresos.sql y 006_sesiones.sql). Antes habia
+    # borrados "a mano" de tablas que no existen (historial, ingresos_diarios):
+    # el primer error de PostgreSQL abortaba la transaccion y no se borraba
+    # nada. No se toleran errores de SQL con try/except: si algo falla, la
+    # transaccion revierte y el error se informa.
     with transaccion(db):
-        try:
-            ejecutar_afectando(db, "DELETE FROM historial WHERE usuario_id = %s", (cliente_id,))
-        except Exception:
-            pass
-        try:
-            ejecutar_afectando(db, "DELETE FROM ingresos_diarios WHERE usuario_id = %s", (cliente_id,))
-        except Exception:
-            pass
-        try:
-            ejecutar_afectando(db, "DELETE FROM ingresos WHERE cliente_id = %s", (cliente_id,))
-        except Exception:
-            pass
-        try:
-            ejecutar_afectando(db, "DELETE FROM sesiones WHERE cliente_id = %s", (cliente_id,))
-        except Exception:
-            pass
         ejecutar_afectando(db, "DELETE FROM clientes WHERE id = %s", (cliente_id,))
     return True

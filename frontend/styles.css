@@ -1059,6 +1059,21 @@ body:has(.modal:not([hidden])) .tabbar { display: none; }
 .btn-peligro:active { transform: scale(0.98); }
 .btn-peligro:disabled { opacity: 0.5; cursor: default; }
 
+/* Confirmacion en 2 pasos del borrado de cuenta: bloque dentro de la propia
+   tarjeta de peligro (reemplaza al window.confirm, que algunos navegadores
+   suprimen y dejaba el clic sin efecto). */
+.confirmar-peligro {
+  margin-top: var(--espacio);
+  padding: 14px;
+  border: 1px solid rgba(220, 38, 38, 0.45);
+  border-radius: var(--radio-chico);
+  background: var(--tarjeta);
+}
+
+.confirmar-peligro .error { margin-top: 0; font-weight: 700; }
+.confirmar-peligro .nota { margin-top: 8px; }
+.confirmar-peligro .estado-carga { margin-top: 12px; }
+
 /* ---------- Modal ---------- */
 .modal {
   position: fixed;
@@ -1578,6 +1593,9 @@ a.btn-atras {
   border-color: var(--primario);
   background: var(--tarjeta);
 }
+
+/* Campo bloqueado mientras una operacion esta en curso (ej. borrar cuenta). */
+.campo-texto:disabled { opacity: 0.6; cursor: default; }
 
 /* Los campos nativos de fecha y mes traen un ancho minimo propio del
    navegador (el texto + el iconito del calendario) y no se achican solos:

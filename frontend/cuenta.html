@@ -146,7 +146,22 @@
           <label class="etiqueta" for="borrar-password">Escribí tu contraseña para confirmar</label>
           <input id="borrar-password" class="campo-texto" type="password" autocomplete="current-password">
           <button id="btn-borrar-cuenta" class="btn-peligro btn-ancho" type="button">🗑️ Borrar mi cuenta</button>
-          <p id="error-borrar" class="error" hidden></p>
+
+          <!-- Confirmación en la misma tarjeta (sin window.confirm): el
+               navegador puede bloquear los diálogos nativos y el clic parecía
+               no hacer nada. Oculto por defecto. -->
+          <div id="confirmar-borrado" class="confirmar-peligro" hidden>
+            <p class="error" id="aviso-irreversible">⚠️ No se puede deshacer: se borran tu cuenta y todos tus ingresos.</p>
+            <p class="nota">Si estás seguro, confirmá el borrado con tu contraseña ya escrita.</p>
+            <div id="borrar-estado" class="estado-carga" hidden>
+              <span class="spinner" aria-hidden="true"></span>
+              <span>Borrando… Puede tardar hasta ~60 segundos si la base de datos está en reposo.</span>
+            </div>
+            <button id="btn-confirmar-borrado" class="btn-peligro btn-ancho" type="button">Confirmar borrado</button>
+            <button id="btn-cancelar-borrado" class="btn-secundario btn-ancho" type="button">Cancelar</button>
+          </div>
+
+          <p id="error-borrar" class="error" hidden role="alert"></p>
         </div>
       </section>
     </main>
