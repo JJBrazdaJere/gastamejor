@@ -145,6 +145,9 @@ const API = {
   verificar: (email, codigo) => apiPedir("POST", "/api/verificar", { email: email, codigo: codigo }),
   reenviar: (email) => apiPedir("POST", "/api/reenviar", { email: email }),
   login: (usuario, password) => apiPedir("POST", "/api/login", { usuario: usuario, password: password }),
+  pedirRecuperacion: (email) => apiPedir("POST", "/api/recuperar", { email: email }),
+  restablecerPassword: (email, codigo, nueva) =>
+    apiPedir("POST", "/api/restablecer", { email: email, codigo: codigo, nueva: nueva }),
   logout: () => apiPedir("POST", "/api/logout", {}),
   perfil: () => apiPedir("GET", "/api/perfil"),
   actualizarPerfil: (datos) => apiPedir("PATCH", "/api/perfil", datos),

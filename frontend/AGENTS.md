@@ -109,6 +109,10 @@ eficiente y optimizar en que se gasta.
     encabezado (en la primera vez, obligatoria, no aparece). En escritorio el
     contenedor de la encuesta se limita a **640px** (`body.pagina-encuesta`)
     para que la tarjeta no se estire.
+21. **Recuperar contraseña** (`cuenta.html` → *Iniciar sesión*): el enlace
+    *¿Olvidaste tu contraseña?* pide el email y envía un **código** por correo
+    con vencimiento; al escribir el código y la contraseña nueva la app
+    **entra directo** (auto-login) y las sesiones viejas quedan cerradas.
 
 ## Requisitos de la web
 

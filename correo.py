@@ -129,6 +129,19 @@ def enviar_codigo_verificacion(destino, codigo):
     return enviar(destino, asunto, cuerpo)
 
 
+def enviar_codigo_recuperacion(destino, codigo):
+    """Correo con el codigo para recuperar la contrasena."""
+    asunto = "GastaMejor: recuperar tu contraseña"
+    cuerpo = (
+        "Hola,\n\n"
+        "Tu codigo para recuperar la contrasena de GastaMejor es:\n\n"
+        "    {}\n\n"
+        "Vence en unos minutos. Si no pediste recuperar tu contrasena, "
+        "ignora este mensaje.\n"
+    ).format(codigo)
+    return enviar(destino, asunto, cuerpo)
+
+
 def enviar_aviso_nueva_password(destino):
     """Aviso (sin contrasena) cuando se cambia la contrasena de la cuenta."""
     asunto = "GastaMejor: se cambio tu contrasena"

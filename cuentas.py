@@ -40,6 +40,11 @@ from validaciones import (
 # Usuario: 3 a 30 caracteres, letras/numeros y . _ -
 _USUARIO = re.compile(r"^[A-Za-z0-9._-]{3,30}$")
 
+# Recuperacion de contrasena: segundos de espera entre pedidos de codigo y
+# cantidad de intentos fallidos antes de invalidar el codigo pendiente.
+RECUPERACION_ENFRIAMIENTO_SEG = 120
+RECUPERACION_INTENTOS_MAX = 5
+
 # Monedas soportadas (las mismas que ofrece la app).
 MONEDAS_SOPORTADAS = {
     "ARS", "MXN", "USD", "EUR", "CLP", "COP", "PEN", "UYU", "BOB", "PYG", "BRL", "CRC", "DOP",
@@ -256,6 +261,157 @@ def cerrar_sesion(db, token):
     with transaccion(db):
         ejecutar(db, "DELETE FROM sesiones WHERE token = %s", (token,))
     return True
+
+
+# ---------------------------------------------------------------------------
+# Recuperacion de contrasena
+# ---------------------------------------------------------------------------
+def _limpiar_codigo_recuperacion(db, cliente_id):
+    """Borra el codigo de recuperacion pendiente (vencido o agotado)."""
+    with transaccion(db):
+        ejecutar(
+            db,
+            "UPDATE clientes SET codigo_recuperacion = NULL, "
+            "codigo_recuperacion_expira = NULL, codigo_recuperacion_intentos = 0 "
+            "WHERE id = %s",
+            (cliente_id,),
+        )
+
+
+def pedir_recuperacion(db, email):
+    """Genera y envia un codigo para recuperar la contrasena.
+
+    Nunca revela si el email existe: si la cuenta no esta, devuelve la misma
+    respuesta generica (sin enviar correo). Solo se avisa si hay que esperar
+    antes de pedir otro codigo.
+    """
+    email = validar_email(email)
+    # El texto es siempre el mismo (exista o no la cuenta): asi nadie puede
+    # averiguar que emails estan registrados.
+    resultado = {
+        "email": email,
+        "codigo_test": None,
+        "mensaje": (
+            "Si existe una cuenta con ese email, te enviamos un código "
+            "para recuperar la contraseña."
+        ),
+    }
+
+    fila = consultar_uno(
+        db,
+        "SELECT id, ultimo_codigo_envio FROM clientes WHERE lower(email) = lower(%s)",
+        (email,),
+    )
+    if not fila:
+        return resultado
+
+    cliente_id, ultimo_envio = fila
+    if ultimo_envio is not None:
+        transcurrido = (_ahora() - ultimo_envio).total_seconds()
+        if transcurrido < RECUPERACION_ENFRIAMIENTO_SEG:
+            raise ErrorValidacion(
+                "Esperá unos minutos antes de pedir otro código para recuperar "
+                "tu contraseña."
+            )
+
+    ahora = _ahora()
+    codigo = generar_codigo()
+    expira = ahora + timedelta(minutes=CODIGO_VIGENCIA_MIN)
+    with transaccion(db):
+        ejecutar_afectando(
+            db,
+            """
+            UPDATE clientes
+            SET codigo_recuperacion = %s, codigo_recuperacion_expira = %s,
+                codigo_recuperacion_intentos = 0, ultimo_codigo_envio = %s
+            WHERE id = %s
+            """,
+            (codigo, expira, ahora, cliente_id),
+        )
+    enviado = correo.enviar_codigo_recuperacion(email, codigo)
+    resultado["codigo_test"] = None if enviado else codigo
+    return resultado
+
+
+def restablecer_password(db, email, codigo, nueva):
+    """Cambia la contrasena con un codigo de recuperacion valido.
+
+    Borra las sesiones abiertas (nadie sigue adentro con la contrasena vieja)
+    y devuelve una sesion nueva, para que el usuario entre directo.
+    """
+    email = validar_email(email)
+    codigo = validar_texto(codigo, "codigo")
+    fila = consultar_uno(
+        db,
+        """
+        SELECT id, nombre, usuario, email, telefono, email_verificado,
+               ingreso_fijo_mensual, moneda, password_hash, creado_en,
+               codigo_recuperacion, codigo_recuperacion_expira,
+               codigo_recuperacion_intentos
+        FROM clientes WHERE lower(email) = lower(%s)
+        """,
+        (email,),
+    )
+    # Acá SI se puede avisar: ya pasó el paso donde se pidió el código.
+    if not fila:
+        raise ErrorNoEncontrado("No existe una cuenta con ese email.")
+
+    cliente_id = fila[0]
+    guardado = fila[10]
+    expira = fila[11]
+    intentos = fila[12] or 0
+
+    if not guardado:
+        raise ErrorValidacion("No hay un código pendiente. Pedí uno nuevo.")
+    if expira is not None and expira < _ahora():
+        _limpiar_codigo_recuperacion(db, cliente_id)
+        raise ErrorValidacion("El código venció. Pedí uno nuevo.")
+    if intentos >= RECUPERACION_INTENTOS_MAX:
+        _limpiar_codigo_recuperacion(db, cliente_id)
+        raise ErrorValidacion("Demasiados intentos fallidos. Pedí un código nuevo.")
+    if not hmac.compare_digest(str(guardado), str(codigo)):
+        with transaccion(db):
+            ejecutar_afectando(
+                db,
+                "UPDATE clientes SET codigo_recuperacion_intentos = "
+                "codigo_recuperacion_intentos + 1 WHERE id = %s",
+                (cliente_id,),
+            )
+        raise ErrorValidacion("El código no es correcto.")
+
+    validar_password(nueva)
+    password_hash = hashear_password(nueva)
+    expira_sesion = _ahora() + timedelta(hours=SESION_HORAS)
+    token = generar_token()
+    with transaccion(db):
+        ejecutar_afectando(
+            db,
+            """
+            UPDATE clientes
+            SET password_hash = %s, codigo_recuperacion = NULL,
+                codigo_recuperacion_expira = NULL, codigo_recuperacion_intentos = 0
+            WHERE id = %s
+            """,
+            (password_hash, cliente_id),
+        )
+        # Las sesiones viejas dejan de servir: la contrasena cambio.
+        ejecutar(db, "DELETE FROM sesiones WHERE cliente_id = %s", (cliente_id,))
+        ejecutar(
+            db,
+            "INSERT INTO sesiones (token, cliente_id, expira_en) VALUES (%s, %s, %s)",
+            (token, cliente_id, expira_sesion),
+        )
+
+    try:
+        correo.enviar_aviso_nueva_password(email)
+    except Exception:  # noqa: BLE001 - la contrasena ya cambio; el aviso no es critico
+        pass
+
+    return {
+        "token": token,
+        "expira_en": expira_sesion.isoformat(),
+        "cliente": _publico(fila),
+    }
 
 
 # ---------------------------------------------------------------------------

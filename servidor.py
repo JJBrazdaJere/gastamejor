@@ -9,6 +9,8 @@ Endpoints (todos bajo /api):
     POST   /api/verificar                 {email, codigo}
     POST   /api/reenviar                  {email}
     POST   /api/login                     {usuario, password}   -> {token, cliente}
+    POST   /api/recuperar                 {email}
+    POST   /api/restablecer               {email, codigo, nueva} -> {token, cliente}
     POST   /api/logout                    (auth)
     GET    /api/perfil                    (auth)
     PATCH  /api/perfil                    {telefono?, ingreso_fijo_mensual?, moneda?} (auth)
@@ -267,6 +269,8 @@ class Manejador(BaseHTTPRequestHandler):
             "/api/verificar": ("POST",),
             "/api/reenviar": ("POST",),
             "/api/login": ("POST",),
+            "/api/recuperar": ("POST",),
+            "/api/restablecer": ("POST",),
             "/api/password": ("POST",),
             "/api/logout": ("POST",),
             "/api/cuenta": ("DELETE",),
@@ -315,6 +319,20 @@ class Manejador(BaseHTTPRequestHandler):
             datos = self._leer_json()
             with self._conexion() as db:
                 resultado = cuentas.iniciar_sesion(db, datos.get("usuario"), datos.get("password"))
+            return self._json(200, resultado)
+
+        if ruta == "/api/recuperar":
+            datos = self._leer_json()
+            with self._conexion() as db:
+                resultado = cuentas.pedir_recuperacion(db, datos.get("email"))
+            return self._json(200, resultado)
+
+        if ruta == "/api/restablecer":
+            datos = self._leer_json()
+            with self._conexion() as db:
+                resultado = cuentas.restablecer_password(
+                    db, datos.get("email"), datos.get("codigo"), datos.get("nueva")
+                )
             return self._json(200, resultado)
 
         # --- Con autenticacion ---

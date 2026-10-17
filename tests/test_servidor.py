@@ -83,3 +83,39 @@ def test_post_sobre_archivo_estatico_es_405(puerto):
     assert codigo == 405
     assert "GET" in cabeceras["Allow"]
     assert "error" in json.loads(cuerpo)
+
+
+# ---------------------------------------------------------------------------
+# Rutas de recuperación de contraseña (no necesitan base de datos)
+# ---------------------------------------------------------------------------
+@pytest.mark.parametrize("ruta", ["/api/recuperar", "/api/restablecer"])
+def test_recuperacion_solo_acepta_post(puerto, ruta):
+    codigo, cabeceras, cuerpo = pedir(puerto, "GET", ruta)
+    assert codigo == 405
+    assert "POST" in cabeceras["Allow"]
+    assert "error" in json.loads(cuerpo)
+
+
+def pedir_post(puerto, ruta, cuerpo):
+    """POST con un cuerpo crudo (texto) y devuelve (codigo, cabeceras, texto)."""
+    conexion = http.client.HTTPConnection("127.0.0.1", puerto, timeout=5)
+    try:
+        conexion.request(
+            "POST",
+            ruta,
+            body=cuerpo.encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+        )
+        respuesta = conexion.getresponse()
+        texto = respuesta.read().decode("utf-8", "replace")
+        return respuesta.status, dict(respuesta.getheaders()), texto
+    finally:
+        conexion.close()
+
+
+@pytest.mark.parametrize("ruta", ["/api/recuperar", "/api/restablecer"])
+def test_recuperacion_con_cuerpo_invalido_es_400(puerto, ruta):
+    codigo, cabeceras, cuerpo = pedir_post(puerto, ruta, "esto-no-es-json")
+    assert codigo == 400
+    assert cabeceras["Content-Type"].startswith("application/json")
+    assert "error" in json.loads(cuerpo)

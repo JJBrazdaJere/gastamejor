@@ -59,6 +59,7 @@ $psql = "C:\Program Files\PostgreSQL\18\bin\psql.exe"
 & $psql -h localhost -U postgres -d practica_sql -v ON_ERROR_STOP=1 -f migrations\005_ingresos.sql
 & $psql -h localhost -U postgres -d practica_sql -v ON_ERROR_STOP=1 -f migrations\006_sesiones.sql
 & $psql -h localhost -U postgres -d practica_sql -v ON_ERROR_STOP=1 -f migrations\007_vista_ingresos_mes.sql
+& $psql -h localhost -U postgres -d practica_sql -v ON_ERROR_STOP=1 -f migrations\008_recuperacion.sql
 ```
 
 | Migración | Qué hace |
@@ -70,6 +71,7 @@ $psql = "C:\Program Files\PostgreSQL\18\bin\psql.exe"
 | `005_ingresos` | Tabla `ingresos` (ingresos **diarios** por usuario) |
 | `006_sesiones` | Tabla `sesiones` (tokens de login con vencimiento) |
 | `007_vista_ingresos_mes` | Vista `ingresos_mes` (total y cantidad de ingresos por usuario y mes) |
+| `008_recuperacion` | Recuperar contraseña: código de recuperación, vencimiento, intentos y último envío |
 
 Cada archivo `NOMBRE_rollback.sql` revierte su migración.
 
@@ -108,8 +110,10 @@ día y el total del mes es la suma de esos ingresos **más** su
 `ingreso_fijo_mensual` (opcional).
 
 - `cuentas.py`: registro, verificación de email, login/sesión, perfil, cambio
-  de contraseña y **eliminación de cuenta** (con contraseña; en cascada borra
-  ingresos y sesiones). Usa la tabla `clientes` (ampliada por la migración 004).
+  de contraseña, **recuperación de contraseña** (código por email con
+  vencimiento, enfriamiento entre pedidos y auto-login) y **eliminación de
+  cuenta** (con contraseña; en cascada borra ingresos y sesiones). Usa la tabla
+  `clientes` (ampliada por las migraciones 004 y 008).
 - `ingresos.py`: alta/baja/listado de ingresos diarios y resúmenes por mes/año.
 - `seguridad.py`: **scrypt** con sal aleatoria para las contraseñas, tokens de
   sesión y códigos de verificación aleatorios.
@@ -152,6 +156,8 @@ del `501` en HTML que da `http.server` por defecto.
 | POST | `/api/verificar` | Verifica el email con el código |
 | POST | `/api/reenviar` | Reenvía el código de verificación |
 | POST | `/api/login` | Inicia sesión → `token` |
+| POST | `/api/recuperar` | Envía un código para recuperar la contraseña (`email`) |
+| POST | `/api/restablecer` | Cambia la contraseña con el código (`email`, `codigo`, `nueva`) y devuelve `token` |
 | POST | `/api/logout` | Cierra la sesión |
 | GET | `/api/perfil` | Datos de la cuenta |
 | PATCH | `/api/perfil` | Actualiza teléfono / ingreso fijo / moneda |

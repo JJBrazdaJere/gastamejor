@@ -48,6 +48,7 @@
               <span id="login-estado-texto">Conectando al servidor… Puede tardar hasta ~60 segundos si la base de datos está en reposo.</span>
             </div>
             <div id="login-estado-error" class="estado-error" hidden role="alert"></div>
+            <p class="nota"><a href="#" id="link-recuperar" class="enlace-volver">¿Olvidaste tu contraseña?</a></p>
           </div>
 
           <div id="panel-registro" hidden>
@@ -71,6 +72,33 @@
             <button id="btn-verificar" class="btn-primario btn-ancho" type="button">Verificar</button>
             <button id="btn-reenviar" class="btn-secundario btn-ancho" type="button">Reenviar código</button>
             <p id="aviso-test" class="aviso-ok" hidden></p>
+          </div>
+
+          <div id="panel-recuperar" hidden>
+            <p class="nota">Escribí tu email y te enviamos un código para elegir una contraseña nueva.</p>
+            <label class="etiqueta" for="rec-email">Email</label>
+            <input id="rec-email" class="campo-texto" type="email" autocomplete="username" autocapitalize="none">
+            <button id="btn-enviar-codigo" class="btn-primario btn-ancho" type="button">Enviar código</button>
+            <div id="rec-estado" class="estado-carga" hidden>
+              <span class="spinner" aria-hidden="true"></span>
+              <span id="rec-estado-texto">Verificando…</span>
+            </div>
+
+            <div id="rec-paso2" hidden>
+              <p class="nota">Código enviado a <strong id="rec-email-mostrado"></strong>.</p>
+              <label class="etiqueta" for="rec-codigo">Código</label>
+              <input id="rec-codigo" class="campo-texto" type="text" inputmode="numeric" autocomplete="one-time-code">
+              <label class="etiqueta" for="rec-password">Contraseña nueva</label>
+              <input id="rec-password" class="campo-texto" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo 8 caracteres">
+              <label class="etiqueta" for="rec-password2">Repetir contraseña</label>
+              <input id="rec-password2" class="campo-texto" type="password" autocomplete="new-password" minlength="8">
+              <button id="btn-restablecer" class="btn-primario btn-ancho" type="button">Restablecer y entrar</button>
+              <button id="btn-reenviar-codigo" class="btn-secundario btn-chico" type="button">Reenviar código</button>
+              <p id="rec-aviso-test" class="aviso-ok" hidden></p>
+            </div>
+
+            <p id="error-recuperar" class="error" hidden role="alert"></p>
+            <p class="nota"><a href="#" id="btn-volver-login" class="enlace-volver">← Volver a iniciar sesión</a></p>
           </div>
 
           <p id="error-auth" class="error" hidden></p>

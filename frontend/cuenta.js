@@ -103,6 +103,8 @@ const estadoCuenta = {
   ingresos: [],
   emailRegistro: "",
   codigoTest: "",
+  emailRecuperacion: "",
+  codigoTestRecuperacion: "",
 };
 
 function mesDeHoy() {
@@ -399,6 +401,7 @@ function mostrarTab(cual) {
   $("#panel-login").hidden = cual !== "login";
   $("#panel-registro").hidden = cual !== "registro";
   $("#panel-verificar").hidden = true;
+  $("#panel-recuperar").hidden = true;
   mostrarError("#error-auth", "");
 }
 
@@ -543,6 +546,163 @@ async function reenviarCodigo() {
   } catch (error) {
     mostrarError("#error-auth", error.message);
   }
+}
+
+/* ---------- Recuperar contraseña ---------- */
+
+/* Deja el panel de recuperación como recién abierto: vuelve al paso 1 y borra
+   el código, las contraseñas y el aviso del intento anterior. Se usa al abrir
+   el panel y al volver al login, para que no quede nada pegado. */
+function limpiarPanelRecuperar() {
+  $("#rec-paso2").hidden = true;
+  $("#rec-codigo").value = "";
+  $("#rec-password").value = "";
+  $("#rec-password2").value = "";
+  $("#rec-email-mostrado").textContent = "";
+  const aviso = $("#rec-aviso-test");
+  if (aviso) {
+    aviso.hidden = true;
+    aviso.textContent = "";
+  }
+  estadoCuenta.emailRecuperacion = "";
+  estadoCuenta.codigoTestRecuperacion = "";
+}
+
+function mostrarPanelRecuperar() {
+  $("#panel-login").hidden = true;
+  $("#panel-registro").hidden = true;
+  $("#panel-verificar").hidden = true;
+  $("#panel-recuperar").hidden = false;
+  mostrarError("#error-recuperar", "");
+  limpiarPanelRecuperar();
+  const usuario = $("#login-usuario").value.trim();
+  if (usuario.indexOf("@") !== -1) $("#rec-email").value = usuario;
+  setRecuperarLoading(false);
+  $("#rec-email").focus();
+}
+
+function setRecuperarLoading(activo) {
+  const estado = $("#rec-estado");
+  const enviar = $("#btn-enviar-codigo");
+  const restablecer = $("#btn-restablecer");
+  const reenviar = $("#btn-reenviar-codigo");
+  if (estado) estado.hidden = !activo;
+  if (enviar) enviar.disabled = activo;
+  if (restablecer) restablecer.disabled = activo;
+  if (reenviar) reenviar.disabled = activo;
+}
+
+/* Paso 1: pide el código y desbloquea el paso 2. */
+async function enviarCodigoRecuperacion() {
+  mostrarError("#error-recuperar", "");
+  const email = $("#rec-email").value.trim();
+  if (!email) {
+    mostrarError("#error-recuperar", "Escribí tu email.");
+    $("#rec-email").focus();
+    return;
+  }
+  setRecuperarLoading(true);
+  try {
+    const res = await API.pedirRecuperacion(email);
+    setRecuperarLoading(false);
+    estadoCuenta.emailRecuperacion = res.email || email;
+    estadoCuenta.codigoTestRecuperacion = res.codigo_test || "";
+    $("#rec-email-mostrado").textContent = estadoCuenta.emailRecuperacion;
+    $("#rec-codigo").value = "";
+    const aviso = $("#rec-aviso-test");
+    if (res.codigo_test) {
+      aviso.textContent =
+        "🔧 Modo prueba (no se envía email real): tu código es " + res.codigo_test;
+      aviso.hidden = false;
+      $("#rec-codigo").value = res.codigo_test;
+    } else {
+      aviso.hidden = true;
+    }
+    $("#rec-paso2").hidden = false;
+    $("#rec-codigo").focus();
+    toast(res.mensaje || "Código enviado.");
+  } catch (error) {
+    setRecuperarLoading(false);
+    mostrarError("#error-recuperar", error.message);
+  }
+}
+
+async function reenviarCodigoRecuperacion() {
+  mostrarError("#error-recuperar", "");
+  const email = estadoCuenta.emailRecuperacion || $("#rec-email").value.trim();
+  setRecuperarLoading(true);
+  try {
+    const res = await API.pedirRecuperacion(email);
+    setRecuperarLoading(false);
+    if (res.codigo_test) {
+      const aviso = $("#rec-aviso-test");
+      aviso.textContent = "🔧 Modo prueba: tu código es " + res.codigo_test;
+      aviso.hidden = false;
+      $("#rec-codigo").value = res.codigo_test;
+    }
+    toast("Código reenviado.");
+  } catch (error) {
+    setRecuperarLoading(false);
+    mostrarError("#error-recuperar", error.message);
+  }
+}
+
+/* Paso 2: cambia la contraseña y entra directo (el backend devuelve sesión). */
+async function restablecerPassword() {
+  mostrarError("#error-recuperar", "");
+  const codigo = $("#rec-codigo").value.trim();
+  const password = $("#rec-password").value;
+  const password2 = $("#rec-password2").value;
+  if (!codigo) {
+    mostrarError("#error-recuperar", "Escribí el código que te llegó.");
+    $("#rec-codigo").focus();
+    return;
+  }
+  if (!password) {
+    mostrarError("#error-recuperar", "Escribí tu contraseña nueva.");
+    $("#rec-password").focus();
+    return;
+  }
+  if (password !== password2) {
+    mostrarError("#error-recuperar", "Las contraseñas no coinciden.");
+    $("#rec-password2").focus();
+    return;
+  }
+  const email = estadoCuenta.emailRecuperacion || $("#rec-email").value.trim();
+
+  setRecuperarLoading(true);
+  try {
+    const res = await API.restablecerPassword(email, codigo, password);
+    setRecuperarLoading(false);
+    apiGuardarToken(res.token);
+    estadoCuenta.cliente = res.cliente;
+    recordarNombre(res.cliente);
+    refrescarSesion();
+    $("#rec-codigo").value = "";
+    $("#rec-password").value = "";
+    $("#rec-password2").value = "";
+    const aviso = $("#rec-aviso-test");
+    if (aviso) aviso.hidden = true;
+    $("#rec-paso2").hidden = true;
+    estadoCuenta.emailRecuperacion = "";
+    estadoCuenta.codigoTestRecuperacion = "";
+    pintarPerfil();
+    mostrarVista("panel");
+    await cargarMes(mesDeHoy());
+    toast("¡Hola de nuevo! 👋");
+  } catch (error) {
+    const msg = (error && error.conexion)
+      ? "No se pudo conectar con el servidor. La base de datos puede estar en reposo; intentá nuevamente en unos segundos."
+      : (error && error.message ? error.message : "No se pudo restablecer la contraseña. Intentá nuevamente.");
+    setRecuperarLoading(false);
+    mostrarError("#error-recuperar", msg);
+  }
+}
+
+function volverLogin() {
+  $("#panel-recuperar").hidden = true;
+  limpiarPanelRecuperar();
+  mostrarTab("login");
 }
 
 async function salir() {
@@ -705,6 +865,35 @@ function conectarEventos() {
   const loginPwd = $("#login-password");
   if (loginPwd) loginPwd.addEventListener("keydown", function (e) {
     if (e.key === "Enter") hacerLogin();
+  });
+
+  /* Recuperar contraseña: enlace del login, enviar/reenviar código,
+     restablecer y volver. Los enlaces "#" frenan la navegación. */
+  const linkRecuperar = $("#link-recuperar");
+  if (linkRecuperar) linkRecuperar.addEventListener("click", function (e) {
+    e.preventDefault();
+    mostrarPanelRecuperar();
+  });
+  const btnEnviarCodigo = $("#btn-enviar-codigo");
+  if (btnEnviarCodigo) btnEnviarCodigo.addEventListener("click", enviarCodigoRecuperacion);
+  const btnReenviarCodigo = $("#btn-reenviar-codigo");
+  if (btnReenviarCodigo) btnReenviarCodigo.addEventListener("click", reenviarCodigoRecuperacion);
+  const btnRestablecer = $("#btn-restablecer");
+  if (btnRestablecer) btnRestablecer.addEventListener("click", restablecerPassword);
+  const btnVolverLogin = $("#btn-volver-login");
+  if (btnVolverLogin) btnVolverLogin.addEventListener("click", function (e) {
+    e.preventDefault();
+    volverLogin();
+  });
+  const recEmail = $("#rec-email");
+  if (recEmail) recEmail.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") enviarCodigoRecuperacion();
+  });
+  ["#rec-codigo", "#rec-password", "#rec-password2"].forEach(function (sel) {
+    const campo = $(sel);
+    if (campo) campo.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") restablecerPassword();
+    });
   });
 
   $("#ing-monto").addEventListener("input", function () {
